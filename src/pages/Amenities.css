@@ -1,0 +1,574 @@
+﻿/* The visitor sees only the background and confirmed image labels. */
+.amenities-page {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 100svh;
+    min-height: 100svh;
+    padding: 0;
+    overflow: hidden;
+    background: #1D1915;
+    color: #FCFAF8;
+    isolation: isolate;
+}
+
+.amenities-overview {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100vw, calc(100svh * var(--overview-aspect, 2)));
+    aspect-ratio: var(--overview-aspect, 2);
+    transform: translate(-50%, -50%);
+}
+
+.amenities-overview__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Luxury gold label pointers: margin rail cards + gold-ring target nodes
+   joined by measured 90-degree orthogonal SVG leader lines. */
+
+.amenities-overview {
+  --lux-gold: #e5c158;
+  --lux-gold-dim: rgba(229, 193, 88, .2);
+  --lux-yellow-light: #fff3cc;
+  --lux-bg-glass: rgba(18, 20, 24, .82);
+}
+
+.amenity-vectors {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.amenity-vector {
+  fill: none;
+  stroke: var(--lux-gold-dim);
+  stroke-width: .18;
+  vector-effect: non-scaling-stroke;
+  transition: stroke .3s ease, filter .3s ease;
+}
+
+.amenity-vector.is-hot {
+  stroke: var(--lux-gold);
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 4px rgba(229, 193, 88, .6));
+}
+
+.amenity-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 13.5%;
+  min-width: 190px;
+  padding: 5% 1.2%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.amenity-rail--left { left: 120px; top: 200px; }
+.amenity-rail--right { right: 85px; top: 200px}
+
+.amenity-rail-card {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(229, 193, 88, .12);
+  border-radius: 6px;
+  background: var(--lux-bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .7);
+  color: #e2e8f0;
+  font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: .03em;
+  text-align: left;
+  cursor: pointer;
+  transition: all .4s cubic-bezier(.16, 1, .3, 1);
+}
+
+.amenity-rail-card img {
+  width: 44px;
+  height: 44px;
+  margin-right: 14px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, .05);
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.amenity-rail-card__text { flex-grow: 1; }
+
+.amenity-rail-card svg {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: .3;
+  color: var(--lux-gold);
+  transform: translateX(0);
+  transition: all .3s ease;
+}
+
+.amenity-rail-card:hover,
+.amenity-rail-card:focus-visible,
+.amenity-rail-card.is-hot {
+  border-color: var(--lux-gold);
+  background: rgba(28, 31, 38, .9);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, .8), 0 0 15px rgba(229, 193, 88, .15);
+}
+
+.amenity-rail-card:hover svg,
+.amenity-rail-card:focus-visible svg,
+.amenity-rail-card.is-hot svg {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+.amenity-node {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.amenity-node::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid var(--lux-gold);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, .6);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.amenity-node__core {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--lux-yellow-light);
+  transition: all .3s ease;
+}
+
+.amenity-node:hover::before,
+.amenity-node:focus-visible::before,
+.amenity-node.is-hot::before {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(229, 193, 88, .55);
+}
+
+.amenity-node:hover .amenity-node__core,
+.amenity-node:focus-visible .amenity-node__core,
+.amenity-node.is-hot .amenity-node__core {
+  background-color: #fff;
+  transform: scale(1.3);
+  box-shadow: 0 0 8px var(--lux-yellow-light);
+}
+
+/* Legacy floating labels replaced by rails + leader lines. */
+
+.amenity-pointer,
+.amenity-pointer__dot,
+.amenity-pointer__label { display: none !important; }
+
+.amenities-page button:focus-visible {
+    outline: 2px solid #FCFAF8;
+    outline-offset: 3px;
+}
+
+.amenity-panorama {
+    position: absolute;
+    inset: 0;
+}
+
+.amenity-panorama canvas {
+    touch-action: none;
+    cursor: grab;
+}
+
+.amenity-panorama canvas:active {
+    cursor: grabbing;
+}
+
+.amenities-back {
+    position: absolute;
+    z-index: 4;
+    top: 28px;
+    right: 4%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid #C1AA9080;
+    border-radius: 5px;
+    background: rgba(29, 25, 21, .9);
+    color: #FCFAF8;
+    font: 12px Arial, sans-serif;
+    cursor: pointer;
+}
+
+.amenities-back svg {
+    width: 18px;
+    height: 18px;
+}
+
+.amenities-view-name {
+    position: absolute;
+    z-index: 2;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    color: #FCFAF8;
+    font: 20px Georgia, serif;
+    text-shadow: 0 2px 8px #000;
+}
+
+.amenity-camera {
+    position: absolute;
+    z-index: 3;
+    right: 4%;
+    bottom: 126px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.amenity-camera button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #C1AA9080;
+    border-radius: 50%;
+    background: rgba(29, 25, 21, .9);
+    color: #FCFAF8;
+    cursor: pointer;
+}
+
+.amenity-camera svg {
+    width: 21px;
+    height: 21px;
+}
+
+.amenity-camera button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.amenity-tour__error,
+.amenities-image-error {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: 130px;
+    transform: translateX(-50%);
+    width: min(420px, 85%);
+    padding: 14px;
+    background: #1D1915;
+    color: #FCFAF8;
+    font: 12px/1.6 Arial, sans-serif;
+}
+
+.amenity-tour__error button {
+    margin-left: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+    .amenity-rail,
+    .amenity-vectors {
+        display: none;
+    }
+
+    /* Touch fallback: dot-only nodes, tap reveals the name inline. */
+    .amenity-node {
+        width: 44px;
+        height: 44px;
+    }
+
+    .amenity-node::before { inset: 11px; }
+
+    .amenity-node__core {
+        position: relative;
+    }
+}
+
+@media (max-width: 700px) {
+    .amenities-back {
+        right: 16px;
+        top: 24px;
+    }
+
+    .amenities-view-name {
+        top: 128px;
+        font-size: 18px;
+    }
+
+    .amenity-camera {
+        right: 16px;
+        bottom: 110px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .amenity-rail-card,
+    .amenity-rail-card svg,
+    .amenity-node::before,
+    .amenity-node__core,
+    .amenity-vector,
+    .amenity-hotspot__pulse,
+    .amenity-hotspot__pulse::after {
+        animation: none;
+        transition: none;
+    }
+}
+
+.amenities-overview.is-placing {
+    cursor: crosshair;
+}
+
+.amenities-page .placement-panel {
+    position: absolute;
+    z-index: 20;
+    top: 130px;
+    right: 4%;
+    bottom: auto;
+    left: auto;
+    width: min(310px, calc(100vw - 32px));
+    max-height: calc(100svh - 250px);
+    overflow-y: auto;
+}
+
+@media (max-width: 700px) {
+    .amenities-page .placement-panel {
+        right: 16px;
+    }
+}
+
+/* In-panorama amenity pointer authoring (same pattern as flat-tour pointer tools). */
+.amenity-pointer-toggle {
+    position: absolute;
+    z-index: 100011;
+    top: 68px;
+    right: 4%;
+    padding: 9px 12px;
+    border: 1px solid #c1aa9080;
+    border-radius: 5px;
+    background: #1d1915e8;
+    color: #fcfaf8;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.amenity-authoring {
+    position: absolute;
+    z-index: 100010;
+    top: 110px;
+    right: 4%;
+    width: min(310px, calc(100vw - 32px));
+    max-height: calc(100svh - 250px);
+    overflow-y: auto;
+    padding: 14px;
+    border: 1px solid #C1AA9080;
+    border-radius: 8px;
+    background: #1d1915ed;
+    color: #FCFAF8;
+    font: 12px/1.5 Arial, sans-serif;
+}
+
+.amenity-authoring__scene {
+    display: grid;
+    gap: 6px;
+}
+
+.amenity-authoring select,
+.amenity-authoring textarea {
+    width: 100%;
+    padding: 8px;
+    background: #3A3126;
+    color: #FCFAF8;
+    border: 1px solid #C1AA90;
+    border-radius: 4px;
+}
+
+.amenities-page .amenity-authoring .placement-panel {
+    position: static;
+    width: auto;
+    max-height: none;
+    margin: 12px 0 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+}
+
+.amenity-authoring textarea {
+    min-height: 130px;
+    font: 11px/1.5 monospace;
+    resize: vertical;
+}
+
+.amenity-authoring__count {
+    color: #C1AA90;
+}
+
+.amenity-tour__loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 18px;
+    border-radius: 6px;
+    background: #1d1915dd;
+    color: #FCFAF8;
+    font: 12px Arial, sans-serif;
+}
+
+@media (max-width: 700px) {
+    .amenity-pointer-toggle {
+        top: 126px;
+        right: 16px;
+    }
+    .amenity-authoring {
+        top: 168px;
+        right: 16px;
+        width: min(270px, calc(100vw - 32px));
+        max-height: calc(100svh - 300px);
+    }
+}
+
+/* Confirmed navigation arrows live at the supplied sphere coordinates.
+   Luxury gold spatial chevron: glass ring, champagne chevron, ripple pulse. */
+.amenity-hotspot {
+    --lux-gold: #e5c158;
+    --lux-yellow-light: #fff3cc;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.amenity-hotspot__pulse {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--lux-gold);
+    border-radius: 50%;
+    background: rgba(22, 25, 30, .75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 0 15px rgba(229, 193, 88, .1);
+    transition: all .4s cubic-bezier(.16, 1, .3, 1);
+}
+
+.amenity-hotspot__pulse::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-left: 2.5px solid var(--lux-yellow-light);
+    border-top: 2.5px solid var(--lux-yellow-light);
+    transform: rotate(45deg) translate(2px, 2px);
+}
+
+.amenity-hotspot__pulse::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--lux-gold);
+    border-radius: 50%;
+    animation: amenity-ripple 2.5s infinite ease-out;
+}
+
+.amenity-hotspot:hover .amenity-hotspot__pulse,
+.amenity-hotspot:focus-visible .amenity-hotspot__pulse {
+    background: rgba(229, 193, 88, .25);
+    transform: scale(1.08);
+    box-shadow: 0 0 25px rgba(229, 193, 88, .4);
+}
+
+@keyframes amenity-ripple {
+    0% { transform: scale(1); opacity: .8; }
+    100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* Legacy arrow badge replaced by the pulsing chevron above. */
+.amenity-hotspot__arrow {
+    display: none;
+}
+
+.amenity-hotspot__label {
+    max-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid #C1AA9080;
+    border-radius: 5px;
+    background: #1d1915e8;
+    font: 12px/1.3 Arial, sans-serif;
+    text-align: center;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .amenity-hotspot__pulse,
+    .amenity-hotspot__pulse::after {
+        animation: none;
+    }
+}
+
+.amenities-scene-picker {
+  position: absolute;
+  z-index: 12;
+  left: 24px;
+  bottom: 110px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #1d1915ed;
+  font: 12px Arial, sans-serif;
+}
+.amenities-scene-picker select {
+  max-width: 220px;
+  padding: 8px;
+  border: 1px solid #C1AA90;
+  border-radius: 4px;
+  background: #1d1915;
+  color: #FCFAF8;
+}
+
+@media (min-width: 1025px) {
+  .amenities-scene-picker { display: none; }
+}

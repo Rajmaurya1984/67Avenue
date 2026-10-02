@@ -1,0 +1,217 @@
+/* Window-view overlay: a full-bleed 360 panorama (drag to rotate), the small
+   floor menu bottom-left and the close button. No loading veil by design —
+   textures are prewarmed so the eye click opens straight into the view.
+   Palette: #1D1915, #3A3126, #695441, #C1AA90, #FCFAF8 */
+
+.window-view {
+    position: fixed;
+    inset: 0;
+    /* Above the bottom dock (100020) and the brand/pager (100015). */
+    z-index: 100030;
+    background: #1D1915;
+    overflow: hidden;
+    /* The overlay eases in rather than popping — first impressions matter. */
+    animation: window-view-enter 0.4s ease both;
+}
+
+@keyframes window-view-enter {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* R3F sets inline sizing on its container, so size it the same way the
+   location panorama does — absolute, full-bleed, drag cursor. */
+.window-view__canvas {
+    position: absolute !important;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    cursor: grab;
+}
+
+.window-view__canvas:active {
+    cursor: grabbing;
+}
+
+/* ---- close ---- */
+
+.window-view__close {
+    position: absolute;
+    z-index: 70;
+    top: 26px;
+    right: 4%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(193, 170, 144, 0.55);
+    border-radius: 50%;
+    background: rgba(29, 25, 21, 0.7);
+    color: #C1AA90;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.window-view__close svg {
+    width: 20px;
+    height: 20px;
+}
+
+.window-view__close:hover {
+    color: #FCFAF8;
+    border-color: #C1AA90;
+    background: rgba(29, 25, 21, 0.9);
+}
+
+/* ---- floor menu, bottom-left ---- */
+
+.window-view__menu {
+    position: absolute;
+    border-radius: 5px;
+    z-index: 50;
+    left: 4%;
+    bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+    padding: 12px 10px;
+    background: rgba(29, 25, 21, 0.78);
+    border: 1px solid rgba(193, 170, 144, 0.35);
+    backdrop-filter: blur(8px);
+}
+
+.window-view__menu-label {
+    margin: 0 0 6px;
+    padding: 0 12px;
+    font: 9px Arial, sans-serif;
+    letter-spacing: 2.2px;
+    color: rgba(193, 170, 144, 0.75);
+}
+
+.window-view__floor {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    border-left: 2px solid transparent;
+    background: transparent;
+    font: 10px Arial, sans-serif;
+    letter-spacing: 2.2px;
+    text-align: left;
+    color: #C1AA90;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.window-view__floor:hover {
+    color: #FCFAF8;
+    background: rgba(193, 170, 144, 0.12);
+}
+
+.window-view__floor.is-active {
+    color: #FCFAF8;
+    border-left-color: #C1AA90;
+    background: rgba(193, 170, 144, 0.16);
+}
+
+.window-view__error {
+    max-width: 180px;
+    margin: 8px 12px;
+    font: 12px/1.5 Arial, sans-serif;
+    color: #FCFAF8;
+}
+
+/* ---- small screens ---- */
+
+@media (max-width: 640px) {
+    .window-view__close {
+        top: 18px;
+        right: 16px;
+    }
+
+    .window-view__menu {
+        left: 16px;
+        bottom: 96px;
+        min-width: 122px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .window-view {
+        animation: none;
+    }
+
+    .window-view__close,
+    .window-view__floor {
+        transition: none;
+    }
+}
+/* Time-of-day icons and camera controls stay outside the draggable canvas. */
+.window-view__times {
+    display: flex;
+    gap: 4px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(193, 170, 144, 0.3);
+}
+.window-view__time {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 54px;
+    min-height: 54px;
+    padding: 7px 5px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #C1AA90;
+    cursor: pointer;
+    font: 10px Arial, sans-serif;
+}
+.window-view__time[aria-pressed="true"] {
+    border-color: rgba(193, 170, 144, 0.6);
+    background: rgba(193, 170, 144, 0.16);
+    color: #FCFAF8;
+}
+.window-view__time:hover { background: rgba(193, 170, 144, 0.12); }
+.window-view__time svg, .window-view__tools svg { width: 22px; height: 22px; }
+.window-view__tools {
+    position: absolute;
+    z-index: 50;
+    right: 4%;
+    bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.window-view__tools button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(193, 170, 144, 0.55);
+    border-radius: 50%;
+    background: rgba(29, 25, 21, 0.78);
+    color: #FCFAF8;
+    cursor: pointer;
+}
+.window-view__tools button:disabled { opacity: 0.4; cursor: default; }
+.window-view__tools button:hover:not(:disabled) { background: #3A3126; }
+.window-view button:focus-visible { outline: 2px solid #C1AA90; outline-offset: 3px; }
+@media (max-width: 640px) {
+    .window-view__tools { right: 16px; bottom: 96px; }
+}
+@media (max-height: 520px) {
+    .window-view__menu { bottom: 12px; max-height: calc(100svh - 24px); overflow-y: auto; }
+    .window-view__tools { bottom: 12px; }
+}

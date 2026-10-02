@@ -1,0 +1,380 @@
+/* Plan page: toolbar + two-column layout (floor rail | gallery).
+   Palette: #1D1915, #3A3126, #695441, #C1AA90 */
+
+.plan-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 0;
+    border-top: 1px solid rgba(193, 170, 144, 0.35);
+    border-bottom: 1px solid rgba(193, 170, 144, 0.35);
+    margin-bottom: 30px;
+}
+
+.plan-toolbar__label {
+    margin: 0;
+    font: 9px Arial, sans-serif;
+    letter-spacing: 2.2px;
+    color: #695441;
+}
+
+.plan-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 34px;
+    align-items: start;
+    padding-bottom: 20px;
+}
+
+@media (max-width: 800px) {
+    .plan-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+/* ---- WindowView: floor plan stage + eye hotspot ----
+   The typical floor plan is the page's background image; the eye opens the
+   window-view overlay (components/window-view/WindowView.css). */
+
+/* Plan page is a first-screen hero: brand and dock are fixed overlays, so
+   the shell's vertical rhythm is dropped and the stage owns the viewport.
+   Horizontal padding stays for the prev/next pager. */
+.editorial-page--plan {
+    padding-top: 0;
+    padding-bottom: 0;
+
+    /* Fixed chrome the drawing has to clear, read from
+       components/site/SiteChrome.css: */
+    --plan-brand-h: 126px;
+    /* brand: top 26 + logo 90 + breathing room */
+    --plan-dock-h: 128px;
+    /* dock: bottom 14 + pill 80 + the active item's raised circle */
+    --plan-hint-h: 40px;
+    /* hint caption under the drawing */
+
+    --plan-chrome-top: var(--plan-brand-h);
+    --plan-chrome-bottom: calc(var(--plan-dock-h) + var(--plan-hint-h));
+
+    /* The height the drawing may use: the viewport minus the fixed chrome. */
+    --plan-free-h: calc(100dvh - var(--plan-chrome-top) - var(--plan-chrome-bottom));
+
+    /* floorPlan-web.webp is 8000x5657, but the tower drawing only fills
+       x 5.625%..94.3% and y 19.94%..82.79% of it, the rest being transparent
+       margin: 2.2503 = (8000 / 5657) / 0.628424 sizes the drawing, not the
+       image. The drawing's centre sits 1.36% of the frame below the frame's
+       centre, so the frame is nudged back up by that much. */
+    --plan-image-fit: 2.2503;
+    --plan-drawing-offset: -1.36%;
+}
+
+/* Phones: the brand is shorter, but the flat CTA moves to the top edge and the
+   hint wraps onto more lines. */
+@media (max-width: 700px) {
+    .editorial-page--plan {
+        --plan-brand-h: 220px;
+        --plan-dock-h: 158px;
+        --plan-hint-h: 72px;
+    }
+}
+
+.editorial-page--plan .editorial-page__body {
+    padding-bottom: 0;
+}
+
+.floorplan-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 100svh;
+    height: 100dvh;
+    padding: var(--plan-chrome-top) 0 var(--plan-chrome-bottom);
+    overflow: hidden;
+    touch-action: auto;
+    user-select: none;
+    cursor: default;
+}
+
+.floorplan-stage.is-dragging {
+    cursor: grabbing;
+}
+
+/* The drawing fills the free height when there is room for it, otherwise the
+   stage width; the stage's overflow hides the frame's transparent margins. */
+.floorplan-stage__frame {
+    position: relative;
+    flex-shrink: 0;
+    width: min(100%, calc((100svh - var(--plan-chrome-top) - var(--plan-chrome-bottom)) * var(--plan-image-fit)));
+    width: min(100%, calc(var(--plan-free-h) * var(--plan-image-fit)));
+    aspect-ratio: 8000 / 5657;
+    transform-origin: center;
+    transform: translateY(var(--plan-drawing-offset));
+}
+
+.floorplan-stage__plan {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.floorplan-stage.is-loaded .floorplan-stage__plan {
+    opacity: 1;
+}
+
+.floorplan-stage__loading {
+    position: absolute;
+    margin: 0;
+    font: 9px Arial, sans-serif;
+    letter-spacing: 2.5px;
+    color: #695441;
+}
+
+/* ---- eye hotspot ---- */
+
+.floorplan-stage__eye {
+    position: absolute;
+    z-index: 5;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    padding: 0;
+    border: 1px solid #C1AA90;
+    border-radius: 50%;
+    background: rgba(29, 25, 21, 0.88);
+    color: #FCFAF8;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.floorplan-stage__eye svg {
+    transform: rotate(180deg);
+    width: 24px;
+    height: 24px;
+}
+
+.floorplan-stage__eye:hover {
+    background: #1D1915;
+    color: #C1AA90;
+}
+
+/* Soft pulse draws the eye without shouting. */
+.floorplan-stage__eye::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border: 1px solid rgba(193, 170, 144, 0.55);
+    border-radius: 50%;
+    animation: floorplan-eye-pulse 2.2s ease-out infinite;
+}
+
+@keyframes floorplan-eye-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    70%,
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .floorplan-stage__eye {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floorplan-stage__eye::after {
+        animation: none;
+    }
+
+    .floorplan-stage__plan {
+        transition: none;
+    }
+}
+
+.floorplan-stage__controls {
+    position: absolute;
+    right: 12px;
+    bottom: 112px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px;
+    border: 1px solid #C1AA90;
+    border-radius: 8px;
+    background: rgba(29, 25, 21, 0.92);
+    color: #FCFAF8;
+    cursor: default;
+}
+
+.floorplan-stage__controls button {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: 24px Arial, sans-serif;
+    cursor: pointer;
+}
+
+.floorplan-stage__controls button:hover {
+    background: #695441;
+}
+
+.floorplan-stage__controls button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.floorplan-stage__controls output {
+    min-width: 48px;
+    text-align: center;
+    font: 12px Arial, sans-serif;
+}
+
+.floorplan-stage__controls .floorplan-stage__fit {
+    font-size: 12px;
+    border-left: 1px solid #695441;
+}
+
+@media (max-width: 640px) {
+    .floorplan-stage__controls {
+        right: 4px;
+        bottom: 106px;
+    }
+}
+
+.floorplan-stage.is-fixed {
+    cursor: default;
+}
+
+.floorplan-stage__controls {
+    display: none !important;
+}
+
+.flat-three-trigger {
+    position: absolute;
+    z-index: 20;
+    bottom: 112px;
+    left: 4%;
+    min-height: 42px;
+    padding: 10px 18px;
+    border: 1px solid #c1aa90;
+    border-radius: 5px;
+    background: #1d1915ee;
+    color: #fcfaf8;
+    font: 12px Arial, sans-serif;
+    cursor: pointer;
+}
+
+.flat-three-trigger:hover {
+    background: #3a3126;
+}
+
+.flat-tour-opening {
+    position: fixed;
+    inset: 0;
+    z-index: 100030;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    background: #1d1915;
+    color: #fcfaf8;
+}
+
+@media(max-width:700px) {
+    .flat-three-trigger {
+        left: 16px;
+        top: 96px;
+    }
+}
+
+.plan-welcome {
+    position: absolute;
+    z-index: 20;
+    bottom: var(--plan-chrome-bottom);
+    left: 4%;
+}
+
+.plan-welcome>p {
+    font: 8px Arial, sans-serif;
+    letter-spacing: 2px;
+    color: #695441;
+    margin: 0 0 10px;
+}
+
+.plan-welcome h1 {
+    margin: 0 0 16px;
+    color: #3a3126;
+    font: 400 26px Georgia, serif;
+}
+
+.plan-welcome .flat-three-trigger {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 12px 16px;
+    text-align: left;
+    box-shadow: 0 4px 18px #1d191518;
+}
+
+.flat-three-trigger small {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: #c1aa90;
+}
+
+.flat-three-trigger b {
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.plan-view-hint {
+    position: absolute;
+    z-index: 10;
+    bottom: var(--plan-dock-h);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(470px, 80%);
+    margin: 0;
+    text-align: center;
+    color: #695441;
+    font: 11px/1.6 Arial, sans-serif;
+}
+
+@media(max-width:700px) {
+    .plan-welcome {
+        top: 148px;
+        left: 20px;
+    }
+
+    .plan-welcome h1 {
+        font-size: 22px;
+    }
+
+    .plan-view-hint {
+        /* bottom follows --plan-dock-h. */
+        font-size: 10px;
+    }
+}
