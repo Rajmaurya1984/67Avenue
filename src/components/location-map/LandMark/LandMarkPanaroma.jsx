@@ -277,13 +277,13 @@ const ROTATION_UP = new THREE.Vector3(0, 1, 0)
 
 function PanoramaRotation({ enabled }) {
   const controls = useThree(state => state.controls)
-  const interaction = useRef({ dragging: false, idleSeconds: 0 })
+  const interaction = useRef({ dragging: false, resumeAt: 0 })
   useEffect(() => {
     if (!controls) return undefined
-    const start = () => { interaction.current.dragging = true; interaction.current.idleSeconds = 0 }
+    const start = () => { interaction.current.dragging = true }
     const end = () => {
       interaction.current.dragging = false
-      interaction.current.idleSeconds = 0
+      interaction.current.resumeAt = performance.now() + 3000
     }
     controls.addEventListener('start', start)
     controls.addEventListener('end', end)
@@ -293,13 +293,8 @@ function PanoramaRotation({ enabled }) {
     }
   }, [controls])
   useFrame(({ camera }, delta) => {
-    if (!enabled || interaction.current.dragging) {
-      interaction.current.idleSeconds = 0
-      return
-    }
-    interaction.current.idleSeconds += Math.min(delta, .05)
-    if (interaction.current.idleSeconds < 3) return
-    camera.position.applyAxisAngle(ROTATION_UP, -.0225 * Math.min(delta, .05))
+    if (!enabled || interaction.current.dragging || performance.now() < interaction.current.resumeAt) return
+    camera.position.applyAxisAngle(ROTATION_UP, -.045 * Math.min(delta, .05))
   }, -2)
   return null
 }
@@ -308,54 +303,62 @@ function TerraceOverlay({ points = DEFAULT_TERRACE_POINTS }) {
   const terraceTexture = useTexture(TERRACE_IMAGE_URL)
 
   const geometry = useMemo(() => {
-    // Bilinear mapping avoids uneven stretching across the quad diagonal.
-    const segments = 32
-    const corners = points.map(point => new THREE.Vector3(...point))
-    const front = new THREE.Vector3()
-    const back = new THREE.Vector3()
-    const position = new THREE.Vector3()
-    const vertices = []
-    const uvs = []
-    const indices = []
-
-    for (let row = 0; row <= segments; row += 1) {
-      const v = row / segments
-      for (let column = 0; column <= segments; column += 1) {
-        const u = column / segments
-        front.lerpVectors(corners[1], corners[0], u)
-        back.lerpVectors(corners[2], corners[3], u)
-        position.lerpVectors(front, back, v)
-        vertices.push(position.x, position.y, position.z)
-        uvs.push(
-          THREE.MathUtils.lerp(TERRACE_UV_BOUNDS.left, TERRACE_UV_BOUNDS.right, u),
-          THREE.MathUtils.lerp(TERRACE_UV_BOUNDS.bottom, TERRACE_UV_BOUNDS.top, v),
-        )
-        if (row < segments && column < segments) {
-          const a = row * (segments + 1) + column
-          const b = a + 1
-          const c = a + segments + 1
-          indices.push(a, b, c, b, c + 1, c)
-        }
-      }
-    }
+    // Lift vertices slightly inward toward origin (0,0,0) so the overlay
+    // sits cleanly inside the panorama sphere without z-fighting.
+    const lift = 0.986
+    const p = points.map(([x, y, z]) => [x * lift, y * lift, z * lift])
 
     const geom = new THREE.BufferGeometry()
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-    geom.setIndex(indices)
+
+    // 2 triangles defining the quad between the 4 corner pointers.
+    //
+    // UV orientation, matching how the 4 pointers were labelled
+    // (plan convention: "Front" = bottom of the artwork = world +Z):
+    //   P0 Front-Right (1, 0)   P1 Front-Left (0, 0)
+    //   P2 Back-Left   (0, 1)   P3 Back-Right  (1, 1)
+    // so image bottom row -> +Z ("Front"), image top row -> -Z ("Back"),
+    // image right column -> +X, image left column -> -X.
+    // The default view faces the +X skyline (azimuth +2 degrees, elevation -4 degrees).
+    // Terrace UV orientation remains tied to the world axes above, independent of the camera.
+    //   If it reads 180° out, swap the v values (0 <-> 1).
+    //   If it reads mirrored, swap the u values (0 <-> 1).
+    const vertices = new Float32Array([
+      // Triangle 1: P0, P1, P2
+      p[0][0], p[0][1], p[0][2],
+      p[1][0], p[1][1], p[1][2],
+      p[2][0], p[2][1], p[2][2],
+
+      // Triangle 2: P0, P2, P3
+      p[0][0], p[0][1], p[0][2],
+      p[2][0], p[2][1], p[2][2],
+      p[3][0], p[3][1], p[3][2],
+    ])
+
+    const uvs = new Float32Array([
+      // Triangle 1: P0, P1, P2
+      1, 0,
+      0, 0,
+      0, 1,
+
+      // Triangle 2: P0, P2, P3
+      1, 0,
+      0, 1,
+      1, 1,
+    ])
+
+    geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+    geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
     geom.computeVertexNormals()
 
     return geom
   }, [points])
 
   return (
-    <mesh geometry={geometry} renderOrder={1} raycast={() => null}>
+    <mesh geometry={geometry}>
       <meshBasicMaterial
         map={terraceTexture}
         transparent={true}
         depthWrite={false}
-        // Keep the exact coordinates while drawing over the panorama.
-        depthTest={false}
         side={THREE.DoubleSide}
       />
     </mesh>
@@ -610,7 +613,7 @@ export default function LandmarkPanorama({
   const [panoramaReady, setPanoramaReady] = useState(false)
   const [loadingComplete, setLoadingComplete] = useState(false)
   const finishLoading = useCallback(() => setLoadingComplete(true), [])
-  const [rotating] = useState(true)
+  const [rotating, setRotating] = useState(true)
   const [markerInteracting, setMarkerInteracting] = useState(false)
   const labelLanes = useMemo(() => landmarkLabelLanes(markerData), [markerData])
   const handlePanoramaReady = useCallback(() => setPanoramaReady(true), [])
@@ -676,7 +679,7 @@ export default function LandmarkPanorama({
         <PanoramaZoom />
         <LocationCalloutProjection markers={mappedDots} elements={calloutElements} />
         <PanoramaFocus target={focusTarget} onArrive={clearFocus} />
-        <PanoramaRotation enabled={rotating && loadingComplete && !markerInteracting && openIndex === null && !focusTarget && !placementMode} />
+        <PanoramaRotation enabled={rotating && panoramaReady && !markerInteracting && openIndex === null && !focusTarget && !placementMode} />
         <OrbitControls
           makeDefault
           enablePan={false}
