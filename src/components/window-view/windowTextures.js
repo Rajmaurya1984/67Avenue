@@ -1,5 +1,5 @@
 ﻿import * as THREE from 'three'
-import { WINDOW_VIEW_FLOORS } from '../../data/windowView.js'
+import { DEFAULT_VIEW_ID, WINDOW_VIEW_FLOORS, getWindowViewAssets } from '../../data/windowView.js'
 import { assetUrl } from '../../lib/utils.js'
 
 // Cache promises too: a click shares any request already warming in the background.
@@ -25,10 +25,12 @@ export function loadWindowTexture(path) {
   return pending
 }
 
-// Only small previews warm automatically; full detail loads for selected floors.
-export async function warmWindowPreviews(isCancelled) {
-  for (const floor of WINDOW_VIEW_FLOORS) {
-    if (isCancelled()) return
-    try { await loadWindowTexture(floor.preview) } catch { /* Retry on selection. */ }
-  }
+// Warm only the opening view; other floors load when selected or hovered.
+export async function warmWindowPreviews(isCancelled, direction) {
+  if (!direction || isCancelled()) return
+  const floor = WINDOW_VIEW_FLOORS.find(({ id }) => id === DEFAULT_VIEW_ID)
+  const assets = getWindowViewAssets(floor, 'day', direction)
+  if (!assets) return
+  try { await loadWindowTexture(assets.preview) } catch { /* Retry on selection. */ }
 }
+

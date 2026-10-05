@@ -1,20 +1,31 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import SiteHeader from '../components/site/SiteHeader.jsx'
 import NavIcon from '../components/site/NavIcon.jsx'
-import AmenityPanorama from '../components/amenity-tour/AmenityPanorama.jsx'
-import { loadWindowTexture } from '../components/window-view/windowTextures.js'
+const AmenityPanorama = lazy(() => import('../components/amenity-tour/AmenityPanorama.jsx'))
+const loadWindowTexture = async (path) => {
+  const textures = await import('../components/window-view/windowTextures.js')
+  return textures.loadWindowTexture(path)
+}
 import { AMENITY_OVERVIEW, AMENITY_SCENES } from '../data/amenityTour.js'
 import { AMENITY_POINTERS } from '../data/amenityPointers.js'
 import { assetUrl } from '../lib/utils.js'
-import { PlacementPanel, usePlacementMarkers } from '../components/landmarks/index.js'
+import { PlacementPanel, usePlacementMarkers } from '../components/landmarks/PlacementPanel.jsx'
+import '../components/landmarks/Landmark.css'
 import './Editorial.css'
 import './Amenities.css'
+import '../components/window-view/TourSceneMenu.css'
 
 // Set true to place overview dots; panorama placer is enabled separately below.
 // Both stay on while you are adding pointers - set false before shipping.
-
 const landmark = false;
 const panoramaPlacement = false;
+const menuScenes = [
+  ['yoga', 'Yoga'], ['ludo', 'Ludo'], ['gazebo', 'Gazebo Seating'],
+  ['walking-3', 'Walking Space Area'], ['swings', 'Swing Area'],
+  ['stargazing', 'Stargazing Deck'], ['terrace-1', 'Terrace Seating 1'],
+  ['screening', 'Outdoor Screening Space'], ['walking-2', 'Walking Space 2'],
+  ['terrace-2', 'Terrace Seating 2'], ['kids', "Kids' Play Area"],
+]
 const placementCategories = AMENITY_SCENES.map((scene) => ({ id: scene.id, label: scene.name }))
 
 export default function Amenities() {
@@ -116,10 +127,10 @@ export default function Amenities() {
   return (
     <main className="editorial-page amenities-page" aria-label="Rooftop amenities">
       <SiteHeader />
-      <div ref={overviewRef} className={`amenities-overview${landmark ? ' is-placing' : ''}`} style={{ '--overview-aspect': overviewAspect }} onDoubleClick={placePointer} aria-hidden={selected ? true : undefined}>
+      <div ref={overviewRef} className={`amenities-overview${landmark ? ' is-placing' : ''}${selected ? ' is-hidden' : ''}`} style={{ '--overview-aspect': overviewAspect }} onDoubleClick={placePointer} aria-hidden={selected ? true : undefined}>
         <img className="amenities-overview__image" key={imageAttempt} src={assetUrl(AMENITY_OVERVIEW) + (imageAttempt ? `?retry=${imageAttempt}` : '')}
-          alt="Aerial view of 67 Avenue and its rooftop amenities" width="6000" height="3000"
-          draggable={false} fetchPriority="high" onLoad={event => { setOverviewAspect(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight); setImageFailed(false); setImageReady(true); requestAnimationFrame(() => measureRef.current?.()) }} onError={() => { setImageReady(false); setImageFailed(true) }} />
+          alt="Aerial view of 67 Avenue and its rooftop amenities" width="2560" height="1280"
+          decoding="async" draggable={false} fetchPriority="high" onLoad={event => { setOverviewAspect(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight); setImageFailed(false); setImageReady(true); requestAnimationFrame(() => measureRef.current?.()) }} onError={() => { setImageReady(false); setImageFailed(true) }} />
         {imageReady && !selected && (
           <svg className="amenity-vectors" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
             {entries.map(({ pointer }) => {
@@ -151,7 +162,7 @@ export default function Amenities() {
                       onPointerLeave={() => setHoveredId((id) => (id === pointer.id ? null : id))}
                       onBlur={() => setHoveredId((id) => (id === pointer.id ? null : id))}
                       onClick={(event) => openView(scene, event)}>
-                      <img src={assetUrl(scene.preview)} alt="" loading="lazy" />
+                      <img src={assetUrl(scene.thumbnail)} alt="" width="44" height="44" loading="lazy" decoding="async" />
                       <span className="amenity-rail-card__text">{pointer.label || scene.name}</span>
                       {/* <NavIcon name="chevron-right" /> */}
                     </button>
@@ -178,15 +189,14 @@ export default function Amenities() {
           </>
         )}
       </div>
-      {!selected && <label className="amenities-scene-picker">Explore amenities
-        <select value="" onChange={event => {
-          const scene = AMENITY_SCENES.find(item => item.id === event.target.value)
-          if (scene) openView(scene, event)
-        }}>
-          <option value="" disabled>Select a view</option>
-          {AMENITY_SCENES.map(scene => <option key={scene.id} value={scene.id}>{scene.name}</option>)}
-        </select>
-      </label>}
+      {selected && <nav className="minimal-room-stack" aria-label="Explore amenities">
+        {menuScenes.map(([id, label]) => <button key={id} type="button"
+          className={`stack-item${selectedId === id ? ' active' : ''}`}
+          data-room={id} aria-pressed={selectedId === id}
+          onClick={() => { if (selectedId !== id) setSelectedId(id) }}>
+          {label}
+        </button>)}
+      </nav>}
       {landmark && !selected && (
         <PlacementPanel categories={placementCategories}
           instructions="Choose an amenity, then double-click its location on the image. Copy config saves the image coordinates for amenityPointers.js."
@@ -196,14 +206,15 @@ export default function Amenities() {
       )}
       {selected && (
         <>
-          <AmenityPanorama scene={selected} onNavigate={setSelectedId} placementMode={panoramaPlacement} />
+          <Suspense fallback={<p role="status">Opening 360° view…</p>}><AmenityPanorama scene={selected} onNavigate={setSelectedId} placementMode={panoramaPlacement} /></Suspense>
           <button ref={backRef} type="button" className="amenities-back" onClick={closeView}>
             <NavIcon name="chevron-left" />Back to amenities
           </button>
-          <p className="amenities-view-name">{selected.name}</p>
+          {/* <p className="amenities-view-name">{selected.name}</p> */}
         </>
       )}
       {imageFailed && !selected && <p className="amenities-image-error" role="alert">The amenities image could not be loaded. <button type="button" onClick={() => { setImageFailed(false); setImageReady(false); setImageAttempt(value => value + 1) }}>Try again</button></p>}
     </main>
   )
 }
+

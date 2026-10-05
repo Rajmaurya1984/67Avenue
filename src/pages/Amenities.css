@@ -1,4 +1,4 @@
-﻿/* The visitor sees only the background and confirmed image labels. */
+/* The visitor sees only the background and confirmed image labels. */
 .amenities-page {
     position: relative;
     display: grid;
@@ -28,14 +28,20 @@
     object-fit: contain;
 }
 
+/* The overview is only visible outside the tour, including during texture loads. */
+.amenities-overview.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Luxury gold label pointers: margin rail cards + gold-ring target nodes
    joined by measured 90-degree orthogonal SVG leader lines. */
 
 .amenities-overview {
-  --lux-gold: #e5c158;
-  --lux-gold-dim: rgba(229, 193, 88, .2);
-  --lux-yellow-light: #fff3cc;
-  --lux-bg-glass: rgba(18, 20, 24, .82);
+  --lux-gold: #C1AA90;
+  --lux-gold-dim: rgba(193, 170, 144, .2);
+  --lux-yellow-light: #F5EFEB;
+  --lux-bg-glass: rgba(29, 25, 21, .88);
 }
 
 .amenity-vectors {
@@ -58,7 +64,7 @@
 .amenity-vector.is-hot {
   stroke: var(--lux-gold);
   stroke-width: 2px;
-  filter: drop-shadow(0 0 4px rgba(229, 193, 88, .6));
+  filter: drop-shadow(0 0 4px rgba(193, 170, 144, .6));
 }
 
 .amenity-rail {
@@ -77,27 +83,63 @@
   scrollbar-width: thin;
 }
 
-.amenity-rail--left { left: 120px; top: 200px; }
+.amenity-rail--left { left: 80px; top: 200px; }
 .amenity-rail--right { right: 85px; top: 200px}
 
 .amenity-rail-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: 0;
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid rgba(229, 193, 88, .12);
+  border: 1px solid rgba(193, 170, 144, .28);
   border-radius: 6px;
   background: var(--lux-bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .7);
-  color: #e2e8f0;
+  color: #F5EFEB;
   font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: .03em;
   text-align: left;
   cursor: pointer;
-  transition: all .4s cubic-bezier(.16, 1, .3, 1);
+  transition: transform .22s cubic-bezier(.25, 1, .5, 1),
+              box-shadow .22s cubic-bezier(.25, 1, .5, 1),
+              background-color .5s ease,
+              border-color .15s ease,
+              color .15s ease;
+}
+
+.amenity-rail-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent 30%,
+    rgba(245, 239, 235, .18)
+  );
+  transform: rotate(-45deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .5s ease, opacity .5s ease;
+}
+
+.amenity-rail-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.amenity-rail-card:is(:hover, :focus-visible, .is-hot)::before {
+  opacity: 1;
+  transform: rotate(-45deg) translateY(100%);
 }
 
 .amenity-rail-card img {
@@ -126,10 +168,16 @@
 .amenity-rail-card:focus-visible,
 .amenity-rail-card.is-hot {
   border-color: var(--lux-gold);
-  background: rgba(28, 31, 38, .9);
+  background: rgba(58, 49, 38, .96);
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, .8), 0 0 15px rgba(229, 193, 88, .15);
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, .65),
+              0 0 18px rgba(193, 170, 144, .16);
+}
+
+.amenity-rail-card:active {
+  transform: translateY(-1px) scale(.98);
+  transition: transform .06s ease;
 }
 
 .amenity-rail-card:hover svg,
@@ -176,7 +224,7 @@
 .amenity-node:focus-visible::before,
 .amenity-node.is-hot::before {
   transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(229, 193, 88, .55);
+  box-shadow: 0 0 12px rgba(193, 170, 144, .55);
 }
 
 .amenity-node:hover .amenity-node__core,
@@ -336,7 +384,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .amenity-rail-card:is(:hover, :focus-visible, .is-hot, :active) {
+        transform: none;
+        transition: none;
+    }
+
     .amenity-rail-card,
+    .amenity-rail-card::before,
     .amenity-rail-card svg,
     .amenity-node::before,
     .amenity-node__core,
@@ -345,6 +399,10 @@
     .amenity-hotspot__pulse::after {
         animation: none;
         transition: none;
+    }
+
+    .amenity-rail-card::before {
+        display: none;
     }
 }
 
@@ -466,8 +524,8 @@
 /* Confirmed navigation arrows live at the supplied sphere coordinates.
    Luxury gold spatial chevron: glass ring, champagne chevron, ripple pulse. */
 .amenity-hotspot {
-    --lux-gold: #e5c158;
-    --lux-yellow-light: #fff3cc;
+    --lux-gold: #C1AA90;
+    --lux-yellow-light: #F5EFEB;
     position: relative;
     display: grid;
     justify-items: center;
@@ -488,10 +546,10 @@
     height: 40px;
     border: 1.5px solid var(--lux-gold);
     border-radius: 50%;
-    background: rgba(22, 25, 30, .75);
+    background: rgba(29, 25, 21, .82);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 0 15px rgba(229, 193, 88, .1);
+    box-shadow: 0 0 15px rgba(193, 170, 144, .1);
     transition: all .4s cubic-bezier(.16, 1, .3, 1);
 }
 
@@ -515,9 +573,9 @@
 
 .amenity-hotspot:hover .amenity-hotspot__pulse,
 .amenity-hotspot:focus-visible .amenity-hotspot__pulse {
-    background: rgba(229, 193, 88, .25);
+    background: rgba(193, 170, 144, .25);
     transform: scale(1.08);
-    box-shadow: 0 0 25px rgba(229, 193, 88, .4);
+    box-shadow: 0 0 25px rgba(193, 170, 144, .4);
 }
 
 @keyframes amenity-ripple {

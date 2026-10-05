@@ -2,35 +2,45 @@ import { lazy, Suspense, useCallback, useState } from 'react'
 import SiteHeader from '../components/site/SiteHeader.jsx'
 import NavIcon from '../components/site/NavIcon.jsx'
 import WindowView from '../components/window-view/WindowView.jsx'
-import { EYE_HOTSPOT, FLOOR_PLAN_IMAGE } from '../data/windowView.js'
+import { WINDOW_VIEW_DIRECTIONS, FLOOR_PLAN_IMAGE } from '../data/windowView.js'
 import { assetUrl } from '../lib/utils.js'
 import './Editorial.css'
 import './Plan.css'
 
 // WindowView page (nav "WindowView" -> /plan): the typical floor plan is a
 // fitted hero image within the available stage. The eye opens <WindowView>.
-// No pan or zoom: the hotspot tracks the drawing via % of the plan image.
+// Scale the frame so the hotspot stays attached to the drawing.
 const FlatTour = lazy(() => import('../components/flat-tour/FlatTour.jsx'))
 
 export default function Plan() {
   const [tourOpen, setTourOpen] = useState(false)
   const [planLoaded, setPlanLoaded] = useState(false)
-  const [viewOpen, setViewOpen] = useState(false)
+  const [viewDirection, setViewDirection] = useState(null)
+  const [zoom] = useState(1)
 
-  const openView = useCallback(() => setViewOpen(true), [])
-  const closeView = useCallback(() => setViewOpen(false), [])
+  const closeView = useCallback(() => setViewDirection(null), [])
 
   return (
     <main className="editorial-page editorial-page--plan">
       <SiteHeader />
       <section className="plan-welcome" aria-label="Explore the residences">
         {/* <p>THE RESIDENCES</p><h1>Your next perspective.</h1> */}
-        <button type="button" className="flat-three-trigger" onClick={() => setTourOpen(true)}><span><small>2 BHK · INTERACTIVE TOUR</small>Flat no 3</span></button>
+        <button
+          type="button"
+          className="flat-three-trigger"
+          onClick={() => setTourOpen(true)}
+        >
+
+          <span className="flat-three-trigger__label"><small>2 BHK</small>Flat no 3</span>
+
+        </button>
       </section>
-      <p className="plan-view-hint">Explore Flat, or select the eye on the plan to discover the window views.</p>
+      <section className=''>
+
+      </section>
       <div className="editorial-page__body">
         <div className={`floorplan-stage${planLoaded ? ' is-loaded' : ''} is-fixed`}>
-          <div className="floorplan-stage__frame">
+          <div className="floorplan-stage__frame" style={{ '--plan-zoom': zoom }}>
             <img
               className="floorplan-stage__plan"
               src={assetUrl(FLOOR_PLAN_IMAGE)}
@@ -40,20 +50,26 @@ export default function Plan() {
               draggable={false}
               onLoad={() => setPlanLoaded(true)}
             />
-            {planLoaded && (
-              <>
+            {planLoaded && WINDOW_VIEW_DIRECTIONS.map(direction => (
                 <button
+                  key={direction.id}
                   type="button"
                   className="floorplan-stage__eye"
-                  style={{ left: `${EYE_HOTSPOT.left}%`, bottom: `${EYE_HOTSPOT.bottom}%` }}
-                  onClick={openView}
-                  aria-label="Open the window view"
+                  style={{ left: `${direction.left}%`, top: `${direction.top}%` }}
+                  onClick={() => setViewDirection(direction.id)}
+                  aria-label={`Open ${direction.label} window view`}
                 >
                   <NavIcon name="eye" />
+                  <span className="floorplan-stage__eye-label">{direction.label}</span>
                 </button>
-              </>
-            )}
+            ))}
           </div>
+          {/* <div className="floorplan-stage__controls" role="group" aria-label="Floor plan zoom">
+            <button type="button" aria-label="Zoom out" disabled={!planLoaded || zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.25))}>−</button>
+            <output aria-live="polite">{Math.round(zoom * 100)}%</output>
+            <button type="button" aria-label="Zoom in" disabled={!planLoaded || zoom >= 2} onClick={() => setZoom(value => Math.min(2, value + 0.25))}>+</button>
+            <button type="button" className="floorplan-stage__fit" disabled={!planLoaded} onClick={() => setZoom(1)}>Reset</button>
+          </div> */}
           {!planLoaded && (
             <p className="floorplan-stage__loading" role="status" aria-live="polite">
               LOADING FLOOR PLAN
@@ -65,7 +81,7 @@ export default function Plan() {
       {tourOpen && <Suspense fallback={<p className="flat-tour-opening" role="status">Opening Flat no 3…</p>}>
         <FlatTour onClose={() => setTourOpen(false)} />
       </Suspense>}
-      <WindowView open={viewOpen} onClose={closeView} preload={planLoaded} />
+      <WindowView open={!!viewDirection} direction={viewDirection} onClose={closeView} preload={planLoaded} />
     </main>
   )
 }

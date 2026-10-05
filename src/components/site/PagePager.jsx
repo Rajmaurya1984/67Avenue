@@ -2,6 +2,7 @@ import { preparePageTransition } from './pageTransition.js'
 import { Link, useLocation } from 'react-router-dom'
 import { getNeighbouringMenu } from '../../data/site.js'
 import NavIcon from './NavIcon.jsx'
+import { preloadPage } from '../../data/pageLoading.js'
 
 // Prev/next page pager, rendered on every page by SiteHeader. Buttons sit
 // at the left/right screen edges (above the dock on phones) and cycle
@@ -15,6 +16,9 @@ export default function PagePager() {
       <Link viewTransition
         className="page-pager__btn page-pager__btn--prev"
         to={prev.to}
+        onPointerEnter={() => preloadPage(prev.to)}
+        onFocus={() => preloadPage(prev.to)}
+        onTouchStart={() => preloadPage(prev.to)}
         onClick={(event) => preparePageTransition(event, pathname, prev.to, 'back')}
         aria-label={`Previous: ${prev.label}`}
       >
@@ -23,6 +27,9 @@ export default function PagePager() {
       <Link viewTransition
         className="page-pager__btn page-pager__btn--next"
         to={next.to}
+        onPointerEnter={() => preloadPage(next.to)}
+        onFocus={() => preloadPage(next.to)}
+        onTouchStart={() => preloadPage(next.to)}
         onClick={(event) => preparePageTransition(event, pathname, next.to, 'forward')}
         aria-label={`Next: ${next.label}`}
       >

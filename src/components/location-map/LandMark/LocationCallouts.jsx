@@ -21,21 +21,21 @@ export function LocationCalloutProjection({ markers, elements }) {
       if (!front) return
       const x = (projected.x + 1) * size.width / 2
       const y = (1 - projected.y) * size.height / 2
-      // Same authored placement model as the reference: a fixed line length
-      // per landmark. No packing, crowd suppression, or camera-dependent rows.
+      // Follow the world-space landmark with a fixed authored offset. Never
+      // clamp to the screen or rearrange labels as the camera rotates.
       const { name } = splitLandmarkTitle(marker.title)
       const authored = LOCATION_CALLOUT_STYLE[name] ?? {}
       const scale = size.width <= 700 ? .65 : 1
       const lift = (size.width <= 700 ? 38 : 54) + (marker.lift ?? authored.lift ?? 0) * scale
       const offset = (marker.labelOffset ?? authored.labelOffset ?? 0) * scale
       const halfWidth = item.label.offsetWidth / 2
-      const center = THREE.MathUtils.clamp(x + offset, halfWidth + 12, Math.max(halfWidth + 12, size.width - halfWidth - 12))
+      const center = x + offset
       const cardBottom = y - lift
       const cardTop = cardBottom - item.label.offsetHeight
       item.label.style.transform = `translate3d(${center}px, ${cardBottom}px, 0) translate(-50%, -100%)`
       // For cards hanging below their point, connect to the top edge. Keep
       // shifted leaders attached to the plate rather than ending in empty sky.
-      const attachY = lift < -item.label.offsetHeight ? cardTop : cardBottom
+      const attachY = cardTop > y ? cardTop : cardBottom
       const attachX = THREE.MathUtils.clamp(x, center - halfWidth + 14, center + halfWidth - 14)
       item.path.setAttribute('d', `M ${x} ${y} L ${x} ${(y + attachY) / 2} L ${attachX} ${attachY}`)
       item.dot.setAttribute('cx', x)

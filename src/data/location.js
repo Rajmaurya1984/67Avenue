@@ -16,17 +16,17 @@ export const LOCATION_MAP_NOTE =
 // components/site/NavIcon.jsx (the project's inline icon set - there is no icon
 // font here, unlike the reference site). The order below is the order the filter
 // panel renders.
-//
 // The brand palette is fixed at four colours, so categories are told apart by
+
 // icon and label rather than by hue: everything draws in cashmere (#C1AA90).
 export const LOCATION_CATEGORIES = [
-  { id: 'transportation', label: 'TRANSPORTATION', icon: 'train' },
+  { id: 'Connectivity', label: 'CONNECTIVITY', icon: 'train' },
   { id: 'business', label: 'BUSINESS HUBS', icon: 'briefcase' },
-  { id: 'infrastructure', label: 'INFRASTRUCTURE', icon: 'bridge' },
-  { id: 'safety', label: 'SAFETY', icon: 'shield' },
+  // { id: 'infrastructure', label: 'INFRASTRUCTURE', icon: 'bridge' },
+  // { id: 'safety', label: 'SAFETY', icon: 'shield' },
   { id: 'hospitals', label: 'HOSPITALS', icon: 'cross' },
-  { id: 'schools', label: 'SCHOOLS', icon: 'cap' },
-  { id: 'roads', label: 'MAJOR ROADS', icon: 'road' },
+  { id: 'schools', label: 'EDUCATION', icon: 'cap' },
+  // { id: 'roads', label: 'MAJOR ROADS', icon: 'road' },
   { id: 'lifestyle', label: 'LIFESTYLE', icon: 'bag' },
 ]
 

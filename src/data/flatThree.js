@@ -34,6 +34,8 @@ export const FLAT_THREE_ROOMS = [
   image: `${ROOT}${room.file}.jpg`,
   // Face the main room feature on arrival; bathrooms face their basin.
   arrivalU: room.id.startsWith('bathroom') ? .5 : FLAT_THREE_RADAR_ANCHORS[room.id].u,
+  // Set the destination heading before the crossfade, without a sideways sweep.
+  arrivalImmediate: true,
 }))
 
 // The tour opens here: selecting "Flat no 3" on the Plan page loads this

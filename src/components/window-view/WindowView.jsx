@@ -6,19 +6,24 @@ import { getWindowTexture, loadWindowTexture, warmWindowPreviews } from './windo
 import PanoramaControls from './PanoramaControls.jsx'
 import WindowViewIcon from './WindowViewIcon.jsx'
 import './WindowView.css'
+import SiteHeader from '../site/SiteHeader.jsx'
 
 const floorById = (id) => WINDOW_VIEW_FLOORS.find((floor) => floor.id === id) ?? WINDOW_VIEW_FLOORS[0]
+const imageAspect = (texture) => texture.image.width / texture.image.height
+// Keep the image's width/height ratio on a 180-degree curved surface.
+const panoramaHeight = (texture) => 50 * Math.PI / imageAspect(texture)
+const imageMaxFov = (texture) => Math.min(95, THREE.MathUtils.radToDeg(2 * Math.atan(Math.PI / (2 * imageAspect(texture)))) - 1)
 
-function PanoramaSphere({ texture }) {
+function PanoramaImage({ texture }) {
   return (
     <mesh scale={[-1, 1, 1]}>
-      <sphereGeometry args={[50, 64, 40]} />
+      <cylinderGeometry args={[50, 50, panoramaHeight(texture), 96, 1, true, Math.PI / 2, Math.PI]} />
       <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
     </mesh>
   )
 }
 
-function FadeSphere({ view, onComplete, reducedMotion }) {
+function FadeImage({ view, onComplete, reducedMotion }) {
   const materialRef = useRef(null)
   const progressRef = useRef(0)
   const completedRef = useRef(false)
@@ -34,27 +39,32 @@ function FadeSphere({ view, onComplete, reducedMotion }) {
   })
   return (
     <mesh scale={[-1, 1, 1]} renderOrder={1}>
-      <sphereGeometry args={[50, 64, 40]} />
+      <cylinderGeometry args={[50, 50, panoramaHeight(view.texture), 96, 1, true, Math.PI / 2, Math.PI]} />
       <meshBasicMaterial ref={materialRef} map={view.texture} side={THREE.DoubleSide}
         transparent opacity={0} depthWrite={false} depthTest={false} />
     </mesh>
   )
 }
 
-function WindowViewSession({ onClose }) {
+function WindowViewSession({ onClose, direction }) {
   const [selection, setSelection] = useState({ id: DEFAULT_VIEW_ID, time: 'day', revision: 0 })
   const [activeView, setActiveView] = useState(null)
   const [incomingView, setIncomingView] = useState(null)
   const [error, setError] = useState('')
   const [fov, setFov] = useState(72)
   const [reducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [rotating, setRotating] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
 
   useEffect(() => {
     let cancelled = false
-    const assets = getWindowViewAssets(floorById(selection.id), selection.time)
+    const assets = getWindowViewAssets(floorById(selection.id), selection.time, direction)
     const load = async () => {
       setError('')
+      if (!assets) {
+        setActiveView(null)
+        setIncomingView(null)
+        setError(`The ${direction} view is not available for this floor and time yet.`)
+        return
+      }
       try {
         const texture = getWindowTexture(assets.image)
           ?? await loadWindowTexture(assets.preview).catch(() => loadWindowTexture(assets.image))
@@ -72,7 +82,7 @@ function WindowViewSession({ onClose }) {
     }
     const frame = requestAnimationFrame(() => { void load() })
     return () => { cancelled = true; cancelAnimationFrame(frame) }
-  }, [selection])
+  }, [selection, direction])
 
   const completeFade = useCallback((view) => {
     setActiveView(view)
@@ -96,18 +106,24 @@ function WindowViewSession({ onClose }) {
     return { ...next, revision: current.revision + 1 }
   })
   const warm = (id, time) => {
-    const assets = getWindowViewAssets(floorById(id), time)
+    const assets = getWindowViewAssets(floorById(id), time, direction)
+    if (!assets) return
     void loadWindowTexture(assets.preview).catch(() => {})
   }
   const displayed = activeView ?? selection
+  const visibleTextures = [activeView?.texture, incomingView?.texture].filter(Boolean)
+  const maxFov = visibleTextures.length ? Math.min(...visibleTextures.map(imageMaxFov)) : 95
+  const minFov = Math.min(35, maxFov)
+  const displayedFov = Math.min(fov, maxFov)
 
   return (
     <div className="window-view" role="dialog" aria-modal="true"
-      aria-label={`Window view - ${floorById(displayed.id).label} - ${displayed.time}`}>
+      aria-label={`Window view - ${direction ?? ''} - ${floorById(displayed.id).label} - ${displayed.time}`}>
+      <SiteHeader />
       <Canvas className="window-view__canvas" camera={{ position: [0, 0, 0.1], fov: 72 }} dpr={[1, 1.5]}>
-        {activeView && <PanoramaSphere texture={activeView.texture} />}
-        {incomingView && <FadeSphere key={incomingView.revision} view={incomingView} onComplete={completeFade} reducedMotion={reducedMotion} />}
-        <PanoramaControls fov={fov} setFov={setFov} rotating={rotating && !!activeView} />
+        {activeView && <PanoramaImage texture={activeView.texture} />}
+        {incomingView && <FadeImage key={incomingView.revision} view={incomingView} onComplete={completeFade} reducedMotion={reducedMotion} />}
+        <PanoramaControls fov={displayedFov} setFov={setFov} minFov={minFov} maxFov={maxFov} rotating={!!activeView} horizontalSpan={Math.PI} />
       </Canvas>
       <div className="window-view__menu">
         <div className="window-view__times" role="group" aria-label="Time of day">
@@ -120,7 +136,7 @@ function WindowViewSession({ onClose }) {
             </button>
           ))}
         </div>
-        <p className="window-view__menu-label">FLOORS</p>
+        <p className="window-view__menu-label">{direction ? `${direction.toUpperCase()} VIEW · FLOORS` : 'FLOORS'}</p>
         {WINDOW_VIEW_FLOORS.map((floor) => (
           <button key={floor.id} type="button"
             className={`window-view__floor${floor.id === selection.id ? ' is-active' : ''}`}
@@ -132,15 +148,6 @@ function WindowViewSession({ onClose }) {
         ))}
         {error && <p className="window-view__error" role="status">{error}</p>}
       </div>
-      <div className="window-view__tools" role="group" aria-label="Panorama controls">
-        <button type="button" aria-label="Zoom in" title="Zoom in" disabled={fov <= 35}
-          onClick={() => setFov((value) => Math.max(35, value - 8))}><WindowViewIcon name="plus" /></button>
-        <button type="button" aria-label="Zoom out" title="Zoom out" disabled={fov >= 95}
-          onClick={() => setFov((value) => Math.min(95, value + 8))}><WindowViewIcon name="minus" /></button>
-        <button type="button" aria-label={rotating ? 'Pause rotation' : 'Start rotation'}
-          title={rotating ? 'Pause rotation' : 'Start rotation'} aria-pressed={rotating}
-          onClick={() => setRotating((value) => !value)}><WindowViewIcon name={rotating ? 'pause' : 'play'} /></button>
-      </div>
       <button type="button" className="window-view__close" onClick={onClose} aria-label="Close window view">
         <WindowViewIcon name="close" />
       </button>
@@ -148,12 +155,12 @@ function WindowViewSession({ onClose }) {
   )
 }
 
-export default function WindowView({ open, onClose, preload = false }) {
+export default function WindowView({ open, onClose, preload = false, direction }) {
   useEffect(() => {
     if (!preload && !open) return undefined
     let cancelled = false
-    void warmWindowPreviews(() => cancelled)
+    void warmWindowPreviews(() => cancelled, direction)
     return () => { cancelled = true }
-  }, [preload, open])
-  return open ? <WindowViewSession onClose={onClose} /> : null
+  }, [preload, open, direction])
+  return open ? <WindowViewSession key={direction} direction={direction} onClose={onClose} /> : null
 }

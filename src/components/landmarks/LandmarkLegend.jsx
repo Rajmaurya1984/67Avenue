@@ -58,6 +58,7 @@ export default function LandmarkLegend({
         aria-label="Filter landmarks by category"
       >
         {categories.map((item) => {
+          console.log("item",item);
           const open = value === item.id
           return (
             <div key={item.id} className={`landmark-group${open ? ' is-open' : ''}`}>

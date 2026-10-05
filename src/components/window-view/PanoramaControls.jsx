@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/immutability -- Three.js camera and shared animation ref are imperative GSAP targets. */
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -7,13 +7,17 @@ import gsap from 'gsap'
 
 const UP = new THREE.Vector3(0, 1, 0)
 
-export default function PanoramaControls({ fov, setFov, rotating, arrivalView, travel, onTravelFov }) {
-  const { gl, get } = useThree()
+export default function PanoramaControls({ fov, setFov, rotating, rotationDelay = 0, arrivalView, travel, onTravelFov, horizontalSpan, minFov = 35, maxFov = 95 }) {
+  const { gl, get, size } = useThree()
+  const horizontalFov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(fov) / 2) * size.width / Math.max(1, size.height))
+  const azimuthLimit = horizontalSpan ? Math.max(0, (horizontalSpan - horizontalFov) / 2 - 0.01) : Infinity
   const controlsRef = useRef(null)
   const arrivalRef = useRef(null)
   const travelRef = useRef(null)
   const interactingRef = useRef(false)
-  useEffect(() => {
+  const rotationIdleRef = useRef(0)
+  const rotationDirectionRef = useRef(-1)
+  useLayoutEffect(() => {
     const camera = get().camera
     const controls = controlsRef.current
     if (!controls || !arrivalView) return undefined
@@ -24,7 +28,14 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
     interactingRef.current = false
     const angle = arrivalView.arrivalU * Math.PI * 2
     if (arrivalView.arrivalImmediate) {
-      camera.position.set(-Math.cos(angle), 0, -Math.sin(angle)).multiplyScalar(camera.position.length())
+      const pitch = THREE.MathUtils.degToRad(arrivalView.arrivalPitch ?? 0)
+      const radius = camera.position.length()
+      controls.target.set(0, 0, 0)
+      camera.position.set(
+        -Math.cos(angle) * Math.cos(pitch),
+        -Math.sin(pitch),
+        -Math.sin(angle) * Math.cos(pitch),
+      ).multiplyScalar(radius)
       camera.fov = 72
       camera.updateProjectionMatrix()
       controls.update()
@@ -38,8 +49,8 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
       const radius = camera.position.length()
       const arrive = () => {
         camera.position.set(-Math.cos(angle), 0, -Math.sin(angle)).multiplyScalar(radius)
-        // Keep the lens narrow at the hidden swap; widen it during the reveal.
-        if (reduce) { camera.fov = 72; camera.updateProjectionMatrix() }
+        // Reset the lens while hidden for transitions that only zoom in.
+        if (reduce || travel.zoomInOnly) { camera.fov = 72; camera.updateProjectionMatrix() }
         controls.update()
         motion.reveal = 1
         onTravelFov?.(72)
@@ -63,8 +74,10 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
         timeline.call(arrive)
         timeline.addLabel('reveal')
         timeline.to(motion, { shade: 1, duration: .65, ease: 'sine.inOut' }, 'reveal')
-        timeline.to(camera, { fov: 72, duration: .85, ease: 'sine.inOut',
-          onUpdate: () => camera.updateProjectionMatrix() }, 'reveal')
+        if (!travel.zoomInOnly) {
+          timeline.to(camera, { fov: 72, duration: .85, ease: 'sine.inOut',
+            onUpdate: () => camera.updateProjectionMatrix() }, 'reveal')
+        }
       }
       return () => {
         timeline.kill()
@@ -98,7 +111,7 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
       event.preventDefault()
       if (arrivalRef.current || travelRef.current) return
       const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1)
-      setFov((value) => THREE.MathUtils.clamp(value + THREE.MathUtils.clamp(pixels * 0.04, -10, 10), 35, 95))
+      setFov((value) => THREE.MathUtils.clamp(Math.min(value, maxFov) + THREE.MathUtils.clamp(pixels * 0.04, -10, 10), minFov, maxFov))
     }
     const distance = () => {
       const [a, b] = [...pointers.values()]
@@ -114,7 +127,7 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
       if (pointers.size !== 2 || before === 0) return
       const after = distance()
-      if (after > 0) setFov((value) => THREE.MathUtils.clamp(value * before / after, 35, 95))
+      if (after > 0) setFov((value) => THREE.MathUtils.clamp(Math.min(value, maxFov) * before / after, minFov, maxFov))
     }
     const up = (event) => pointers.delete(event.pointerId)
     canvas.addEventListener('wheel', wheel, { passive: false })
@@ -131,10 +144,10 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
       canvas.removeEventListener('pointercancel', up)
       canvas.removeEventListener('lostpointercapture', up)
     }
-  }, [gl, setFov])
+  }, [gl, setFov, minFov, maxFov])
 
   useFrame(({ camera }, delta) => {
-    if (travelRef.current) return
+    if (travelRef.current) { rotationIdleRef.current = 0; return }
     const arrival = arrivalRef.current
     if (arrival) {
       const duration = arrival.travel ? .95 : .85
@@ -163,16 +176,29 @@ export default function PanoramaControls({ fov, setFov, rotating, arrivalView, t
     }
     // Rotate by elapsed time without adding OrbitControls damping momentum,
     // so pausing stops immediately and manual dragging always takes priority.
-    if (rotating && !arrival && !interactingRef.current) camera.position.applyAxisAngle(UP, -0.06 * Math.min(delta, 0.05))
+    if (!rotating || arrival || interactingRef.current) rotationIdleRef.current = 0
+    else {
+      rotationIdleRef.current += Math.min(delta, 0.05)
+      if (rotationIdleRef.current >= rotationDelay) {
+        if (horizontalSpan && controlsRef.current) {
+          const angle = controlsRef.current.getAzimuthalAngle()
+          if (angle <= -azimuthLimit + 0.01) rotationDirectionRef.current = 1
+          else if (angle >= azimuthLimit - 0.01) rotationDirectionRef.current = -1
+        }
+        camera.position.applyAxisAngle(UP, rotationDirectionRef.current * 0.03 * Math.min(delta, 0.05))
+      }
+    }
     if (!arrival?.travel && Math.abs(camera.fov - fov) > 0.01) {
-      camera.fov = THREE.MathUtils.damp(camera.fov, fov, 12, delta)
+      camera.fov = Math.min(maxFov, THREE.MathUtils.damp(camera.fov, fov, 12, delta))
       camera.updateProjectionMatrix()
     }
   }, -2)
 
   // Zoom changes field of view; dollying would move the camera inside the sphere.
   return <OrbitControls ref={controlsRef} makeDefault enablePan={false} enableZoom={false}
+    minAzimuthAngle={-azimuthLimit} maxAzimuthAngle={azimuthLimit}
+    minPolarAngle={horizontalSpan ? Math.PI / 2 : 0} maxPolarAngle={horizontalSpan ? Math.PI / 2 : Math.PI}
     enableDamping dampingFactor={0.08} rotateSpeed={-0.35}
-    onStart={() => { interactingRef.current = true }}
+    onStart={() => { interactingRef.current = true; rotationIdleRef.current = 0 }}
     onEnd={() => { interactingRef.current = false }} />
 }

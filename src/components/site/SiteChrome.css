@@ -56,9 +56,13 @@
     align-items: flex-start;
     gap: 40px;
     margin: 0;
-    padding: 10px 14px;
+    padding: 0px 14px;
+    padding-right: 40px;
     list-style: none;
-    background: #1D1915;
+    /* background: #1D1915; */
+    background: rgba(29, 25, 21, 0.75); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); /* Crucial for Safari support */
     border: 1px solid rgba(193, 170, 144, 0.22);
     border-radius: 999px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -136,6 +140,7 @@
 .site-dock__item.is-active .site-dock__icon {
     top: -24px;
     width: 56px;
+    padding: 5px;
     height: 56px;
     background: #1D1915;
     border: 3px solid #C1AA90;

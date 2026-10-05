@@ -1,15 +1,16 @@
-import { Html } from '@react-three/drei'
-import { AMENITY_HOTSPOTS } from '../../data/amenityHotspots.js'
+import PanoramaMarker from '../window-view/PanoramaMarker.jsx'
+import { AMENITY_HOTSPOTS, getAmenityTravelArrival } from '../../data/amenityHotspots.js'
 import { AMENITY_SCENES } from '../../data/amenityTour.js'
 import { PlacementMarker, PlacementPanel } from '../landmarks/index.js'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import PanoramaControls from '../window-view/PanoramaControls.jsx'
-import WindowViewIcon from '../window-view/WindowViewIcon.jsx'
 import { getWindowTexture, loadWindowTexture } from '../window-view/windowTextures.js'
 
-function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace }) {
+const LEVEL_ROTATION = new THREE.Quaternion()
+
+function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace, rotation }) {
   const gl = useThree(state => state.gl)
   useLayoutEffect(() => { gl.initTexture(view.texture) }, [gl, view.texture])
   const materialRef = useRef(null)
@@ -23,6 +24,7 @@ function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace 
     if (t === 1) { completeRef.current = true; onComplete(view) }
   })
   return (
+    <group quaternion={rotation ?? LEVEL_ROTATION}>
     <mesh scale={[-1, 1, 1]} renderOrder={fade ? 1 : 0}
       onDoubleClick={onPlace ? (event) => {
         event.stopPropagation()
@@ -32,24 +34,27 @@ function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace 
       <meshBasicMaterial ref={materialRef} map={view.texture} side={THREE.DoubleSide}
         transparent={fade} opacity={fade ? 0 : 1} depthTest={!fade} depthWrite={!fade} />
     </mesh>
+    </group>
   )
 }
 
-const DRAFT_KEY = '67avenue-amenity-hotspots-v1'
+// Preserve the old draft set while collecting coordinates for the new renders.
+const DRAFT_KEY = '67avenue-amenity-hotspots-v2'
 
 export default function AmenityPanorama({ scene, onNavigate, placementMode = false }) {
   const [active, setActive] = useState(null)
   const [incoming, setIncoming] = useState(null)
+  const activeRef = useRef(null)
+  const canvasRef = useRef(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [fov, setFov] = useState(72)
   const [reducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [rotating, setRotating] = useState(false)
   // Local toggle — same pattern as FlatTour's "Place room pointers" button.
   // `placementMode` (from Amenities.jsx `panoramaPlacement`) enables the
   // amenity hotspot tool; this toggle shows/hides it at runtime.
-  const [placing, setPlacing] = useState(placementMode)
-  useEffect(() => { setPlacing(placementMode) }, [placementMode])
+  const [placementHidden, setPlacementHidden] = useState(true)
+  const placing = placementMode && !placementHidden
   const [destination, setDestination] = useState('')
   const [didCopy, setDidCopy] = useState(false)
   const [draftMessage, setDraftMessage] = useState('')
@@ -66,6 +71,7 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
   useEffect(() => {
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts)) }
     catch { /* Copy config remains available when browser storage is disabled. */ }
+
   }, [drafts])
 
   useEffect(() => {
@@ -73,18 +79,32 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
     const token = {}
     const load = async () => {
       setError('')
-      setRotating(false)
       setFov(72)
       try {
         const texture = getWindowTexture(scene.image)
-          ?? await loadWindowTexture(scene.preview).catch(() => loadWindowTexture(scene.image))
+          ?? await loadWindowTexture(scene.image)
         if (cancelled) return
-        setIncoming({ id: scene.id, name: scene.name, texture, token })
-        const detail = await loadWindowTexture(scene.image).catch(() => null)
-        if (cancelled || !detail) return
-        const sharp = { id: scene.id, name: scene.name, texture: detail, token }
-        setIncoming((current) => current?.token === token ? sharp : current)
-        setActive((current) => current?.token === token ? sharp : current)
+        const source = activeRef.current
+        const camera = canvasRef.current?.().camera
+        let arrival = scene
+        if (source && camera && source.id !== scene.id) {
+          const direction = camera.getWorldDirection(new THREE.Vector3())
+          const heading = Math.atan2(direction.z, direction.x)
+          const pointer = AMENITY_HOTSPOTS.find((marker) =>
+            marker.sourceScene === source.id && marker.category === scene.id)
+          arrival = getAmenityTravelArrival(source.id, scene, pointer, heading)
+        }
+        // Hold the outgoing image still while the camera changes to the
+        // destination's level heading; otherwise its ground visibly slides.
+        let outgoingRotation
+        if (source && camera) {
+          const angle = arrival.arrivalU * Math.PI * 2
+          const levelCamera = camera.clone()
+          levelCamera.position.set(-Math.cos(angle), 0, -Math.sin(angle)).multiplyScalar(camera.position.length())
+          levelCamera.lookAt(0, 0, 0)
+          outgoingRotation = levelCamera.quaternion.clone().multiply(camera.quaternion.clone().invert())
+        }
+        setIncoming({ ...arrival, arrivalPitch: 0, outgoingRotation, texture, token })
       } catch {
         if (!cancelled) setError('This view could not be opened. Please try again.')
       }
@@ -100,7 +120,6 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
   const sceneMarkers = drafts.filter((marker) => marker.sourceScene === scene.id)
   const place = (position) => {
     if (busy) return
-    setRotating(false)
     setDidCopy(false)
     const target = AMENITY_SCENES.find((item) => item.id === targetId)
     setDrafts((current) => [...current, {
@@ -130,43 +149,50 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
     }
   }
   const complete = useCallback((view) => {
+    activeRef.current = view
     setActive(view)
     setIncoming((current) => current?.token === view.token ? null : current)
   }, [])
 
   return (
     <section className="amenity-panorama" aria-label={`360 view: ${active?.name ?? scene.name}`}>
-      <Canvas camera={{ position: [0, 0, 0.1], fov: 72 }} dpr={[1, 1.5]}>
-        {active && <PanoramaLayer view={active} onPlace={placementMode && placing && !busy ? place : undefined} />}
+      <Canvas camera={{ position: [0, 0, 0.1], fov: 72 }} dpr={[1, 1.5]}
+        onCreated={(state) => { canvasRef.current = state.get }}>
+        {/* Keep an opaque outgoing panorama behind the entire destination fade. */}
+        {active && <PanoramaLayer view={active} rotation={incoming?.outgoingRotation}
+          onPlace={placementMode && placing && !busy ? place : undefined} />}
         {incoming && <PanoramaLayer key={`${incoming.id}-${retry}`} view={incoming} fade reducedMotion={reducedMotion} onComplete={complete} />}
         {placementMode && placing && !busy && sceneMarkers.map((marker) => <PlacementMarker key={marker.id} marker={marker} />)}
-        {(!placing || !placementMode) && !busy && AMENITY_HOTSPOTS.filter((marker) => marker.sourceScene === scene.id).map((marker) => (
-          <Html key={marker.id} position={marker.position} center zIndexRange={[1000, 100]}>
+        {(!placing || !placementMode) && !busy && AMENITY_HOTSPOTS.filter((marker) => marker.sourceScene === active?.id).map((marker) => (
+          <PanoramaMarker key={marker.id} position={marker.position} zIndexRange={[1000, 100]}>
             <button type="button" className="amenity-hotspot" aria-label={`Go to ${marker.title}`}
               onPointerDown={(event) => event.stopPropagation()}
               onDoubleClick={(event) => event.stopPropagation()}
               onPointerEnter={() => {
                 const destinationScene = AMENITY_SCENES.find((item) => item.id === marker.category)
-                if (destinationScene) void loadWindowTexture(destinationScene.preview).catch(() => { })
+                if (destinationScene) void loadWindowTexture(destinationScene.image).catch(() => { })
               }}
               onFocus={() => {
                 const destinationScene = AMENITY_SCENES.find((item) => item.id === marker.category)
-                if (destinationScene) void loadWindowTexture(destinationScene.preview).catch(() => { })
+                if (destinationScene) void loadWindowTexture(destinationScene.image).catch(() => { })
               }}
               onClick={(event) => {
                 event.stopPropagation()
-                setRotating(false)
+                const destinationScene = AMENITY_SCENES.find((item) => item.id === marker.category)
+                if (!destinationScene) return
                 onNavigate(marker.category)
               }}>
               <span className="amenity-hotspot__pulse" aria-hidden="true" />
               <span className="amenity-hotspot__label">{marker.title}</span>
             </button>
-          </Html>
+          </PanoramaMarker>
         ))}
-        <PanoramaControls fov={fov} setFov={setFov} rotating={rotating && !!active && !busy} arrivalView={AMENITY_SCENES.find(item => item.id === (incoming?.id ?? active?.id))} />
+        <PanoramaControls fov={fov} setFov={setFov} rotationDelay={3}
+          rotating={!reducedMotion && !!active && !busy && !placing}
+          arrivalView={incoming ?? active} />
       </Canvas>
       {placementMode && <button type="button" className="amenity-pointer-toggle" aria-pressed={placing}
-        onClick={() => setPlacing((value) => !value)}>{placing ? 'Hide amenity pointers' : 'Place amenity pointers'}</button>}
+        onClick={() => setPlacementHidden((value) => !value)}>{placing ? 'Hide amenity pointers' : 'Place amenity pointers'}</button>}
       {placementMode && placing && <div className="amenity-authoring">
         <PlacementPanel title="Amenity pointer placer" categories={categories}
           instructions={`In ${scene.name}: select the destination below, drag to look around, then double-click its exact location. Undo/Clear affect this panorama. Copy exports all panoramas.`}
@@ -177,12 +203,7 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
         {drafts.length > 0 && !sceneMarkers.length && <button type="button" onClick={copy}>Copy all panoramas</button>}
         {draftMessage && <p role="status">{draftMessage}</p>}
         {exportText && <textarea aria-label="Exported panorama pointers" value={exportText} readOnly onFocus={(event) => event.target.select()} />}
-      </div>}      {busy && !error && <p className="amenity-tour__loading" role="status">Opening {scene.name}…</p>}
-      <div className="amenity-camera" role="group" aria-label="Panorama controls">
-        <button type="button" aria-label="Zoom in" title="Zoom in" disabled={fov <= 35} onClick={() => setFov((value) => Math.max(35, value - 8))}><WindowViewIcon name="plus" /></button>
-        <button type="button" aria-label="Zoom out" title="Zoom out" disabled={fov >= 95} onClick={() => setFov((value) => Math.min(95, value + 8))}><WindowViewIcon name="minus" /></button>
-        <button type="button" aria-label={rotating ? 'Pause rotation' : 'Start rotation'} title={rotating ? 'Pause rotation' : 'Start rotation'} aria-pressed={rotating} onClick={() => setRotating((value) => !value)}><WindowViewIcon name={rotating ? 'pause' : 'play'} /></button>
-      </div>
+      </div>}    
       {error && <div className="amenity-tour__error" role="alert">{error}<button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>}
     </section>
   )

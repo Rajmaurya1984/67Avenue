@@ -1,13 +1,25 @@
 const ROOT = '/assets/amenities'
-export const AMENITY_OVERVIEW = `${ROOT}/optimized/overview.webp`
+// Updated renders have fresh previews and thumbnails generated from the new images.
+const UPDATED_SCENES = new Set(['yoga', 'walking-3', 'stargazing', 'swings',
+  'screening', 'terrace-2', 'terrace-1', 'kids', 'gazebo', 'ludo', 'walking-2'])
+const IMAGE_REVISION = '20261005-1'
+export const AMENITY_OVERVIEW = `${ROOT}/optimized/overview-display.webp`
 
-// Horizontal feature positions measured on the current equirectangular renders.
-// Mirrored SphereGeometry maps u to (cos(2?u), 0, sin(2?u)).
+// Feature centres measured on the current renders, as image x / image width.
+// Mirrored SphereGeometry maps u to (cos(2πu), 0, sin(2πu)).
 export const AMENITY_ARRIVAL_U = {
-  yoga: 0, 'walking-3': .49, 'walking-4': .49, 'walking-1': .5,
-  'walking-5': .06, stargazing: .51, screening: 0,
-  'terrace-2': .69, 'terrace-1': .51, kids: .44, 'kids-2': .79,
-  'gazebo-2': .94, gazebo: .75, ludo: .84, 'walking-2': .36, swings: .5,
+  yoga: .535, 'walking-3': .49, 'walking-4': .49, 'walking-1': .5,
+  'walking-5': .06, stargazing: .51, screening: .51,
+  'terrace-2': .625, 'terrace-1': .555, kids: .485, 'kids-2': .79,
+  'gazebo-2': .94, gazebo: .515, ludo: .535, 'walking-2': .49, swings: .485,
+}
+
+// Degrees above/below the horizon. Ground features need a downward arrival tilt.
+export const AMENITY_ARRIVAL_PITCH = {
+  yoga: -18, 'walking-3': -12, 'walking-2': -12,
+  stargazing: -12, screening: -8, swings: -12,
+  'terrace-2': -22, 'terrace-1': -15, kids: -12,
+  gazebo: -18, ludo: -27,
 }
 
 // Numbered views correspond to the supplied camera renders. The overview uses
@@ -31,8 +43,10 @@ export const AMENITY_SCENES = [
   ['swings', 'Swing Area', 'cam06_swingArea.webp'],
 ].map(([id, name, filename], index) => ({
   id, name, number: String(index + 1).padStart(2, '0'),
-  image: `${ROOT}/${filename}`,
+  image: `${ROOT}/${filename}${UPDATED_SCENES.has(id) ? `?v=${IMAGE_REVISION}` : ''}`,
   arrivalU: AMENITY_ARRIVAL_U[id],
+  arrivalPitch: AMENITY_ARRIVAL_PITCH[id] ?? 0,
   arrivalImmediate: true,
-  preview: `${ROOT}/optimized/${filename.replace('.webp', '-preview.webp')}`,
+  thumbnail: `${ROOT}/optimized/${filename.replace('.webp', UPDATED_SCENES.has(id) ? '-thumb.webp' : '-preview.webp')}?v=${IMAGE_REVISION}`,
+  preview: `${ROOT}/optimized/${filename.replace('.webp', '-preview.webp')}?v=${IMAGE_REVISION}`,
 }))

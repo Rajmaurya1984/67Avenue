@@ -3,6 +3,30 @@
 // control colour through text colour alone. Used by the bottom pill dock
 // (NAV_MENU), the page pager, and the Location landmark categories.
 
+import { useId } from 'react'
+import './NavIcon.css'
+
+const EYE_OUTLINE = 'M0,15.089434 C0,16.3335929 5.13666091,24.1788679 14.9348958,24.1788679 C24.7325019,24.1788679 29.8697917,16.3335929 29.8697917,15.089434 C29.8697917,13.8456167 24.7325019,6 14.9348958,6 C5.13666091,6 0,13.8456167 0,15.089434 Z'
+
+function BlinkingEye() {
+  const id = useId()
+  const outlineId = `${id}-outline`
+  const maskId = `${id}-mask`
+  return <svg className="nav-icon-eye" viewBox="0 0 30 30" fill="currentColor" stroke="none" aria-hidden="true" focusable="false">
+    <defs>
+      <path id={outlineId} d={EYE_OUTLINE} />
+      <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30" style={{ maskType: 'luminance' }}>
+        <rect width="30" height="30" fill="white" />
+        <use href={`#${outlineId}`} className="nav-icon-eye__lid" fill="black" />
+      </mask>
+    </defs>
+    <g className="nav-icon-eye__shape">
+      <path d={`${EYE_OUTLINE} M14.9348958,22.081464 C11.2690863,22.081464 8.29688487,18.9510766 8.29688487,15.089434 C8.29688487,11.2277914 11.2690863,8.09740397 14.9348958,8.09740397 C18.6007053,8.09740397 21.5725924,11.2277914 21.5725924,15.089434 C21.5725924,18.9510766 18.6007053,22.081464 14.9348958,22.081464 Z M18.2535869,15.089434 C18.2535869,17.0200844 16.7673289,18.5857907 14.9348958,18.5857907 C13.1018339,18.5857907 11.6162048,17.0200844 11.6162048,15.089434 C11.6162048,13.1587835 13.1018339,11.593419 14.9348958,11.593419 C15.9253152,11.593419 14.3271242,14.3639878 14.9348958,15.089434 C15.451486,15.7055336 18.2535869,14.2027016 18.2535869,15.089434 Z`} />
+      <use href={`#${outlineId}`} mask={`url(#${maskId})`} />
+    </g>
+  </svg>
+}
+
 const ICONS = {
   home: (
     <>
@@ -39,13 +63,6 @@ const ICONS = {
   ),
   'chevron-left': <path d="M14 6 8 12l6 6" />,
   'chevron-right': <path d="M10 6l6 6-6 6" />,
-  // WindowView floor plan: the eye hotspot that opens the window view.
-  eye: (
-    <>
-      <path d="M2 12c3-6.5 17-6.5 20 0-3 6.5-17 6.5-20 0Z" />
-      <circle cx="12" cy="12" r="3" />
-    </>
-  ),
   // Location panel categories (see LOCATION_CATEGORIES in data/location.js).
   train: (
     <>
@@ -105,6 +122,7 @@ const ICONS = {
 }
 
 export default function NavIcon({ name }) {
+  if (name === 'eye') return <BlinkingEye />
   return (
     <svg
       viewBox="0 0 24 24"

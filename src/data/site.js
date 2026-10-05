@@ -18,7 +18,7 @@ export const NAV_MENU = [
   { label: 'Location', to: '/location', icon: 'pin' },
   { label: 'Amenities', to: '/amenities', icon: 'sparkle' },
   { label: 'View/Apartment', to: '/plan', icon: 'grid' },
-  { label: 'Legacy', to: '/legacy', icon: 'medal' },
+  // { label: 'Legacy', to: '/legacy', icon: 'medal' },
 ]
 
 // Neighbouring menu entries for the prev/next pager (wraps around both

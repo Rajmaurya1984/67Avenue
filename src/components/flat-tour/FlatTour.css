@@ -49,11 +49,21 @@
 }
 
 .flat-tour__header button {
-  padding: 10px 16px;
-  color: #fcfaf8;
-  background: transparent;
-  border: 1px solid #c1aa9060;
-  border-radius: 50px;
+  position: absolute;
+    z-index: 70;
+    top: 26px;
+    right: 4%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(193, 170, 144, 0.55);
+    border-radius: 50%;
+    background: rgba(29, 25, 21, 0.7);
+    color: #fff0cf;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .flat-tour__body {
@@ -193,7 +203,7 @@
   left: 0;
   right: 0;
   padding: 45px 26px 24px;
-  background: linear-gradient(transparent, #1d1915dc);
+  /* background: linear-gradient(transparent, #1d1915dc); */
   pointer-events: none;
 }
 
@@ -215,6 +225,8 @@
 }
 
 .flat-tour__zoom button {
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
   color: #fcfaf8;
@@ -222,6 +234,11 @@
   border: 1px solid #c1aa9080;
   border-radius: 50%;
   font-size: 22px;
+}
+
+.flat-tour__zoom button svg {
+  width: 20px;
+  height: 20px;
 }
 
 .flat-tour__zoom button:disabled {
@@ -302,7 +319,7 @@
   position: absolute;
   inset: 0 0 auto;
   z-index: 5;
-  background: linear-gradient(#1d1915b3, transparent);
+  /* background: linear-gradient(#1d1915b3, transparent); */
   border: 0;
 }
 
@@ -418,7 +435,7 @@
   left: -45px;
   top: -45px;
   border-radius: 50%;
-  background: conic-gradient(from calc(var(--radar-fov, 72deg) / -2), #cba56d70 0deg, #cba56d70 var(--radar-fov, 72deg), transparent var(--radar-fov, 72deg));
+  background: conic-gradient(from calc(var(--radar-fov, 72deg) / -2), #ba8434 0deg, #cba56d70 var(--radar-fov, 72deg), transparent var(--radar-fov, 72deg));
 }
 
 .flat-radar__position i {
@@ -558,8 +575,8 @@
 .flat-room-hotspot__arrow {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #e8d5b7;
   border-radius: 50%;
   color: #fff4df;
