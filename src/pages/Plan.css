@@ -327,13 +327,9 @@
     left: 4%;
 }
 
-.plan-welcome>p {
-    font: 8px Arial, sans-serif;
-    letter-spacing: 2px;
-    color: #695441;
-    margin: 0 0 10px;
+.flatNo {
+    display: flex;
 }
-
 .plan-welcome h1 {
     margin: 0 0 16px;
     color: #3a3126;
@@ -410,4 +406,18 @@
 @media (prefers-reduced-motion: reduce) {
     .plan-welcome .flat-three-trigger, .flat-three-trigger__icon { transition: none; }
     .plan-welcome .flat-three-trigger:is(:hover, :focus-visible, :active) { transform: none; }
+}
+
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+    .editorial-page--plan {
+        --plan-brand-h: 72px;
+        --plan-dock-h: 80px;
+        --plan-hint-h: 20px;
+    }
+    .plan-welcome { top: auto; left: max(24px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); }
+    .plan-welcome h1 { margin-bottom: 8px; font-size: 18px; }
+    .plan-welcome > p { margin-bottom: 6px; }
+    .plan-welcome .flat-three-trigger { height: 44px; padding: 0 14px; font-size: 12px; }
+    .plan-view-hint { font-size: 10px; }
+    .floorplan-stage__eye { scale: .75; }
 }

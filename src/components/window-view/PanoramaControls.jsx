@@ -36,7 +36,9 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
         -Math.sin(pitch),
         -Math.sin(angle) * Math.cos(pitch),
       ).multiplyScalar(radius)
-      camera.fov = 72
+      const arrivalFov = THREE.MathUtils.clamp(arrivalView.arrivalFov ?? 72, minFov, maxFov)
+      camera.fov = arrivalFov
+      setFov(arrivalFov)
       camera.updateProjectionMatrix()
       controls.update()
       controls.enabled = true
@@ -103,7 +105,7 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
       controls.enabled = true
       controls.enableDamping = true
     }
-  }, [arrivalView, get, travel, onTravelFov])
+  }, [arrivalView, get, travel, onTravelFov, minFov, maxFov, setFov])
   useEffect(() => {
     const canvas = gl.domElement
     const pointers = new Map()

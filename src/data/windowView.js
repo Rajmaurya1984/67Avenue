@@ -18,7 +18,7 @@ export const EYE_HOTSPOT = { left: 29, bottom: 10 }
 export const WINDOW_VIEW_DIRECTIONS = [
   { id: 'north', label: 'North', left: 91, top: 51 },
   { id: 'south', label: 'South', left: 9, top: 51 },
- // { id: 'east', label: 'East', left: 50, top: 86 },
+  { id: 'east', label: 'East', left: 50, top: 86 },
   { id: 'west', label: 'West', left: 50, top: 13 },
 ]
 

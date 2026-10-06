@@ -12,7 +12,7 @@ import './SiteChrome.css'
 //   - the brand pinned top-left (site-brand)
 //   - the fixed bottom pill dock with the five menu items (site-dock)
 // Nav content (label, route, icon) comes from NAV_MENU in data/site.js.
-export default function SiteHeader() {
+export default function SiteHeader({ showGroup = true }) {
   const { pathname } = useLocation()
   useEffect(() => {
     // Warm Amenities from every page, including direct visits via the dock.
@@ -23,6 +23,7 @@ export default function SiteHeader() {
       <Link viewTransition onPointerEnter={() => preloadPage('/')} onFocus={() => preloadPage('/')} onClick={(event) => preparePageTransition(event, pathname, '/')} className="site-brand" to="/" aria-label="67 Avenue home">
         <img src={assetUrl(SITE.logo)} alt="" />
       </Link>
+      {showGroup && <img className="site-group" src={assetUrl(SITE.groupLogo)} alt="Rajvi Group" />}
       <nav className="site-dock" aria-label="Main navigation">
         <ul className="site-dock__list">
           {NAV_MENU.map((item) => (

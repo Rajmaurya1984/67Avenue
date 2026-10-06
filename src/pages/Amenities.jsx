@@ -208,7 +208,7 @@ export default function Amenities() {
         <>
           <Suspense fallback={<p role="status">Opening 360° view…</p>}><AmenityPanorama scene={selected} onNavigate={setSelectedId} placementMode={panoramaPlacement} /></Suspense>
           <button ref={backRef} type="button" className="amenities-back" onClick={closeView}>
-            <NavIcon name="chevron-left" />Back to amenities
+            <NavIcon name="chevron-left" />Back 
           </button>
           {/* <p className="amenities-view-name">{selected.name}</p> */}
         </>
@@ -217,4 +217,3 @@ export default function Amenities() {
     </main>
   )
 }
-

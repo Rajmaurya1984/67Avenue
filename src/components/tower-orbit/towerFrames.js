@@ -3,7 +3,7 @@
 // drop is a one-line swap of createFrameSequence() options below (prefix,
 // range and pad may all differ; nothing else in the feature needs to change).
 //
-// The current set contains all 72 frames: Avenue_67_00.webp through Avenue_67_71.webp.
+// The current set contains 121 frames: Avenue_67_000.jpg through Avenue_67_120.jpg.
 
 // Builds an ordered list of existing frame URLs from a numbered convention.
 // Numbers that fall inside `missing` are excluded; the remaining sequence is
@@ -27,7 +27,7 @@ export function createFrameSequence({
   return { basePath, numbers, urls, count: urls.length }
 }
 
-// Current tower set: 72 frames, numbered 00 through 71.
+// Current tower set: 121 frames, numbered 000 through 120.
 // Future 30-frame tower example:
 //   createFrameSequence({ basePath: '/assets/tower-v2', prefix: 'tower-',
 //     start: 1, end: 30, pad: 4, extension: '.avif' })
@@ -35,8 +35,8 @@ export const TOWER_SEQUENCE = createFrameSequence({
   basePath: '/assets/tower',
   prefix: 'Avenue_67_',
   start: 0,
-  end: 71,
-  pad: 2,
-  extension: '.webp',
+  end: 120,
+  pad: 3,
+  extension: '.jpg',
   missing: [],
 })

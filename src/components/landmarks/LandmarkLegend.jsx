@@ -32,11 +32,11 @@ export default function LandmarkLegend({
       className="landmark-legend"
       aria-label="Landmarks around the project"
     >
-      <header className="landmark-legend__head">
-        <p className="landmark-legend__eyebrow">{eyebrow}</p>
-        {title && <h2 className="landmark-legend__title">{title}</h2>}
-        {intro && <p className="landmark-legend__intro">{intro}</p>}
-      </header>
+      {/* <header className="landmark-legend__head"> */}
+        {/* <p className="landmark-legend__eyebrow">{eyebrow}</p> */}
+        {/* {title && <h2 className="landmark-legend__title">{title}</h2>}
+        {intro && <p className="landmark-legend__intro">{intro}</p>} */}
+      {/* </header> */}
 
       {/* {allLabel && (
         <div className="landmark-legend__toolbar">

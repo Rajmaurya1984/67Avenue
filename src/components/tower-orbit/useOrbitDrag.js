@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-// Three drag segments: 0–24, 24–48, and 48–71 for the 72-frame sequence.
+// Five drag segments, ending at 24, 48, 72, 96 and 120 for 121 frames.
 // Derive duration from this project's frame count rather than the reference's 100 frames.
 const DRAG_THRESHOLD = 24
-const VIEW_COUNT = 3
-const FRAME_RATE = 24
+const VIEW_COUNT = 5
+// A 24-frame drag takes about 1.2 seconds, with eased starts and stops.
+const FRAME_RATE = 18
 const IGNORE_SELECTOR = 'button, a, input, textarea, select, [data-no-drag]'
 const mod = (value, count) => ((value % count) + count) % count
 
@@ -31,8 +32,9 @@ export default function useOrbitDrag({ elRef, frameCount, enabled = true, onFram
   const nextView = useCallback((direction) => {
     const count = Math.max(frameCount, 1)
     const frame = Math.round(state.current.position * count)
-    const step = Math.ceil(count / VIEW_COUNT)
-    const stops = [...new Set([0, Math.min(step, count - 1), Math.min(step * 2, count - 1), count - 1])]
+    const step = Math.ceil((count - 1) / VIEW_COUNT)
+    const stops = [...new Set(Array.from({ length: VIEW_COUNT + 1 },
+      (_, index) => Math.min(index * step, count - 1)))]
     // After the final frame, continue across the seam into the first segment.
     const next = direction > 0
       ? stops.find((stop) => stop > frame) ?? count + (stops[1] ?? 0)
@@ -103,7 +105,8 @@ export default function useOrbitDrag({ elRef, frameCount, enabled = true, onFram
         a.elapsed += Math.min(Math.max(now - a.last, 0), 50)
         a.last = now
         const progress = Math.min(a.elapsed / a.duration, 1)
-        s.position = a.from + (a.to - a.from) * progress
+        const easedProgress = (1 - Math.cos(Math.PI * progress)) / 2
+        s.position = a.from + (a.to - a.from) * easedProgress
         if (progress === 1) {
           s.position = mod(a.to, 1)
           s.animation = null

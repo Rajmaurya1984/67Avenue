@@ -19,25 +19,30 @@ export default function Plan() {
   const [zoom] = useState(1)
 
   const closeView = useCallback(() => setViewDirection(null), [])
-
   return (
     <main className="editorial-page editorial-page--plan">
       <SiteHeader />
-      <section className="plan-welcome" aria-label="Explore the residences">
-        {/* <p>THE RESIDENCES</p><h1>Your next perspective.</h1> */}
+      <div className='flatNo'>
+        <section className="plan-welcome" aria-label="Explore the residences">
         <button
           type="button"
           className="flat-three-trigger"
           onClick={() => setTourOpen(true)}
         >
-
           <span className="flat-three-trigger__label"><small>2 BHK</small>Flat no 3</span>
-
         </button>
-      </section>
-      <section className=''>
-
-      </section>
+        </section>
+        <section className="plan-welcome" aria-label="Explore the residences">
+          <button
+            type="button"
+            className="flat-three-trigger"
+            onClick={() => setTourOpen(true)}
+          >
+            <span className="flat-three-trigger__label"><small>2 BHK</small>Flat no 3</span>
+          </button>
+        </section>
+      </div>
+     
       <div className="editorial-page__body">
         <div className={`floorplan-stage${planLoaded ? ' is-loaded' : ''} is-fixed`}>
           <div className="floorplan-stage__frame" style={{ '--plan-zoom': zoom }}>

@@ -1,5 +1,51 @@
 @import './variables.css';
 
+/* Shared landscape sizing keeps phone controls on the same anchors. */
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+  :root {
+    --mobile-edge: clamp(16px, 2.82vw, 28px);
+    --mobile-bottom: max(16px, env(safe-area-inset-bottom));
+    --mobile-panel-width: clamp(112px, 15.26vw, 146px);
+    --mobile-map-width: clamp(145px, 20.54vw, 196px);
+  }
+}
+
+.rotate-device-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 24px;
+  background: #1e1a16;
+  color: #fff;
+  text-align: center;
+  z-index: 100100;
+}
+
+.rotate-device-overlay::backdrop { background: #1e1a16; }
+.rotate-content h2 { margin: 16px 0 8px; font-size: 18px; font-weight: 600; color: #f7f4f0; }
+.rotate-content p { margin: 0; font-size: 13px; line-height: 1.5; color: #a3978e; }
+.phone-icon { color: #c1aa90; animation: spinPhone 2.5s ease-in-out infinite; }
+
+@keyframes spinPhone {
+  0%, 10%, 90%, 100% { transform: rotate(0deg); }
+  40%, 60% { transform: rotate(-90deg); }
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .rotate-device-overlay[open] { display: flex; justify-content: center; align-items: center; }
+  body { overflow: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-icon { animation: none; transform: rotate(-90deg); }
+}
+
 *,
 *::before,
 *::after {
@@ -117,6 +163,7 @@ html.back-transition::view-transition-new(root) {
 
 /* Capture shared controls separately so only the page content slides. */
 ::view-transition-group(site-brand),
+::view-transition-group(site-group),
 ::view-transition-group(site-dock),
 ::view-transition-group(page-pager) {
   animation: none;
@@ -131,12 +178,14 @@ html.back-transition::view-transition-new(root) {
 }
 
 ::view-transition-old(site-brand),
+::view-transition-old(site-group),
 ::view-transition-old(site-dock),
 ::view-transition-old(page-pager) {
   animation: chrome-fade-out 900ms ease-in-out both;
 }
 
 ::view-transition-new(site-brand),
+::view-transition-new(site-group),
 ::view-transition-new(site-dock),
 ::view-transition-new(page-pager) {
   animation: chrome-fade-in 900ms ease-in-out both;
@@ -164,6 +213,8 @@ html.back-transition::view-transition-new(root) {
 
   ::view-transition-old(site-brand),
   ::view-transition-new(site-brand),
+  ::view-transition-old(site-group),
+  ::view-transition-new(site-group),
   ::view-transition-old(site-dock),
   ::view-transition-new(site-dock),
   ::view-transition-old(page-pager),

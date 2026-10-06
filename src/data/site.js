@@ -6,6 +6,7 @@ export const SITE = {
   name: '67 Avenue',
   brandMark: '67',
   logo: '/assets/home/logo.png',
+  groupLogo: '/assets/home/group.png',
   brandTail: 'AVENUE',
   tagline: 'RESIDENCES OF DISTINCTION',
   address: '67 Avenue, India', // TODO: full project address

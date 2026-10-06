@@ -647,3 +647,26 @@
 .flat-radar__position i {
   box-sizing: border-box;
 }
+
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+  .flat-tour--immersive .flat-tour__map-panel {
+    left: auto;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: var(--mobile-map-width);
+    padding: 8px;
+    max-height: calc(100dvh - 88px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  .flat-tour__header button { top: max(12px, env(safe-area-inset-top)); }
+  .flat-room-hotspot__arrow { width: 26px; height: 26px; }
+  .flat-room-hotspot__arrow svg { width: 20px; height: 20px; }
+  .flat-room-hotspot__label { font-size: 10px; padding: 5px 8px; }
+  .flat-pointer-toggle { top: 72px; left: max(var(--mobile-edge), env(safe-area-inset-left)); }
+  .flat-pointer-tools {
+    top: 112px;
+    left: max(var(--mobile-edge), env(safe-area-inset-left));
+    max-height: calc(100dvh - 132px);
+    width: min(280px, calc(100vw - 64px));
+  }
+}

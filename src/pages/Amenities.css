@@ -220,6 +220,7 @@
   transition: all .3s ease;
 }
 
+
 .amenity-node:hover::before,
 .amenity-node:focus-visible::before,
 .amenity-node.is-hot::before {
@@ -347,25 +348,47 @@
     cursor: pointer;
 }
 
-@media (max-width: 1024px) {
-    .amenity-rail,
-    .amenity-vectors {
-        display: none;
+@media (max-width: 1024px), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+    /* Reuse the desktop cards and columns; mobile removes only thumbnails. */
+    .amenity-rail {
+        display: flex;
+        top: calc((100% - 100svh) / 2 + max(72px, 20svh));
+        bottom: calc((100% - 100svh) / 2 + max(80px, calc(64px + env(safe-area-inset-bottom))));
+        width: clamp(120px, 16.43vw, 157px);
+        min-width: 0;
+        padding: 8px 4px;
+        gap: 8px;
     }
-
-    /* Touch fallback: dot-only nodes, tap reveals the name inline. */
-    .amenity-node {
-        width: 44px;
-        height: 44px;
+    .amenity-rail--left { left: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-left)); }
+    .amenity-rail--right { right: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-right)); }
+    .amenity-rail-card {
+        flex-shrink: 0;
+        min-height: 34px;
+        width: 80%;
+        padding: 8px 10px;
+        font-size: 10px;
     }
-
-    .amenity-node::before { inset: 11px; }
-
-    .amenity-node__core {
-        position: relative;
+    .amenity-rail-card img { display: none; }
+    .amenity-vectors { display: none; }
+    .amenity-rail-card:is(:hover, :focus-visible, .is-hot) {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 22px -8px rgba(0, 0, 0, .65),
+                    0 0 14px rgba(193, 170, 144, .24);
+    }
+    .amenity-rail-card:is(:hover, :focus-visible, .is-hot)::before {
+        animation: amenity-card-shine .65s ease-out both;
+    }
+    .amenity-rail-card:active {
+        transform: translateY(0) scale(.97);
+        transition-duration: .08s;
     }
 }
 
+@keyframes amenity-card-shine {
+    from { opacity: 0; transform: rotate(-45deg) translateY(-50%); }
+    35% { opacity: 1; }
+    to { opacity: 0; transform: rotate(-45deg) translateY(100%); }
+}
 @media (max-width: 700px) {
     .amenities-back {
         right: 16px;

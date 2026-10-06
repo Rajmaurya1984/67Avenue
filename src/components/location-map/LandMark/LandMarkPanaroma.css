@@ -1042,3 +1042,43 @@
     width: 14px;
     height: 14px;
 }
+
+/* Preserve the desktop neighbourhood panel and label plates on phones. */
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+    .landmark-panorama-container .landmark-legend {
+        top: auto;
+        right: auto;
+        left: max(var(--mobile-edge), env(safe-area-inset-left));
+        bottom: var(--mobile-bottom);
+        width: clamp(110px, 13.38vw, 128px);
+        height: clamp(130px, 42dvh, 184px);
+        max-height: calc(50dvh - 30px - var(--mobile-bottom));
+    }
+    .landmark-panorama-container .landmark-legend__head { padding: 12px; gap: 10px; }
+    .landmark-panorama-container .landmark-legend__eyebrow { font-size: 7px; letter-spacing: 1.2px; gap: 8px; }
+    .landmark-panorama-container .landmark-legend__title { font-size: 20px; }
+    .landmark-panorama-container .landmark-legend__intro { display: block; font-size: 10px; }
+    .landmark-panorama-container .landmark-groups {
+        display: block;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    .landmark-panorama-container .landmark-legend.is-collapsed .landmark-groups { display: none; }
+    .landmark-panorama-container .landmark-group {
+        border-right: 0;
+        border-bottom: 1px solid rgba(105, 84, 65, .2);
+    }
+    .landmark-panorama-container .landmark-filter { min-height: 32px; padding: 9px 12px; }
+    .landmark-panorama-container .landmark-filter__label { font-size: 8px; letter-spacing: .9px; }
+    .location-callouts__card {
+        min-height: 30px;
+        max-width: none;
+        gap: 7px;
+        padding: 8px 11px 8px 12px;
+        font-size: 8px;
+        border-radius: 5px;
+    }
+    .location-callouts__card svg { width: 13px; height: 13px; }
+    .location-callouts__card span { overflow: visible; text-overflow: clip; }
+    .location-callouts__card small { font-size: 7px; padding-left: 7px; }
+}

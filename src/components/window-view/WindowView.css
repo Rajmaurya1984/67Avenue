@@ -215,3 +215,23 @@
     .window-view__menu { bottom: 12px; max-height: calc(100svh - 24px); overflow-y: auto; }
     .window-view__tools { bottom: 12px; }
 }
+
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+    .window-view__menu {
+        left: max(var(--mobile-edge), env(safe-area-inset-left));
+        bottom: var(--mobile-bottom);
+        min-width: 0;
+        width: 126px;
+        padding: 4px 5px;
+        gap: 0;
+        /* Keep the top below the centered 44px page arrow, with an 8px gap. */
+        max-height: min(140px, calc(50dvh - 30px - var(--mobile-bottom)));
+        overflow-y: auto;
+    }
+    .window-view__times { gap: 1px; padding-bottom: 2px; margin-bottom: 2px; }
+    .window-view__time { min-width: 0; min-height: 26px; padding: 2px; gap: 1px; font-size: 7px; }
+    .window-view__time svg { width: 12px; height: 12px; }
+    .window-view__menu-label { padding: 0 6px; font-size: 6px; letter-spacing: .5px; margin-bottom: 3px; }
+    .window-view__floor { min-height: 20px; padding: 3px 6px; font-size: 8px; letter-spacing: .5px; }
+    .window-view__error { margin: 4px 6px; font-size: 9px; }
+}

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { loadPage } from './data/pageLoading.js'
 import Amenities from './pages/Amenities.jsx'
+import RotateDeviceOverlay from './components/ui/RotateDeviceOverlay.jsx'
 
 // Resolve each page module before committing navigation, so transitions capture
 // the destination page rather than a temporary Suspense loading message.
@@ -16,5 +17,5 @@ const router = createBrowserRouter([
 ])
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return <><RouterProvider router={router} /><RotateDeviceOverlay /></>
 }

@@ -25,8 +25,10 @@ export function LocationCalloutProjection({ markers, elements }) {
       // clamp to the screen or rearrange labels as the camera rotates.
       const { name } = splitLandmarkTitle(marker.title)
       const authored = LOCATION_CALLOUT_STYLE[name] ?? {}
-      const scale = size.width <= 700 ? .65 : 1
-      const lift = (size.width <= 700 ? 38 : 54) + (marker.lift ?? authored.lift ?? 0) * scale
+      const compact = size.width > size.height && (size.width <= 1024
+        || (size.height <= 600 && window.matchMedia('(pointer: coarse)').matches))
+      const scale = compact ? .75 : size.width <= 700 ? .65 : 1
+      const lift = 54 * scale + (marker.lift ?? authored.lift ?? 0) * scale
       const offset = (marker.labelOffset ?? authored.labelOffset ?? 0) * scale
       const halfWidth = item.label.offsetWidth / 2
       const center = x + offset
