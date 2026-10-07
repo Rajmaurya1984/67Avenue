@@ -4,16 +4,36 @@ export default function RotateDeviceOverlay() {
   const dialogRef = useRef(null)
 
   useEffect(() => {
-    const portrait = window.matchMedia('(max-width: 767px) and (orientation: portrait)')
+    const portrait = window.matchMedia('(orientation: portrait)')
+    const phone = window.matchMedia('(max-width: 767px), (max-width: 1024px) and (any-pointer: coarse)')
     const dialog = dialogRef.current
+    let frame = 0
     const syncOrientation = () => {
-      if (portrait.matches && !dialog.open) dialog.showModal()
-      if (!portrait.matches && dialog.open) dialog.close()
+      const mustRotate = phone.matches && portrait.matches
+      if (mustRotate && !dialog.open) dialog.showModal()
+      if (!mustRotate && dialog.open) dialog.close()
+    }
+    const scheduleSync = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(syncOrientation)
     }
     syncOrientation()
-    portrait.addEventListener('change', syncOrientation)
+    portrait.addEventListener('change', scheduleSync)
+    phone.addEventListener('change', scheduleSync)
+    window.addEventListener('resize', scheduleSync)
+    window.addEventListener('orientationchange', scheduleSync)
+    window.addEventListener('pageshow', scheduleSync)
+    window.visualViewport?.addEventListener('resize', scheduleSync)
+    window.screen.orientation?.addEventListener('change', scheduleSync)
     return () => {
-      portrait.removeEventListener('change', syncOrientation)
+      cancelAnimationFrame(frame)
+      portrait.removeEventListener('change', scheduleSync)
+      phone.removeEventListener('change', scheduleSync)
+      window.removeEventListener('resize', scheduleSync)
+      window.removeEventListener('orientationchange', scheduleSync)
+      window.removeEventListener('pageshow', scheduleSync)
+      window.visualViewport?.removeEventListener('resize', scheduleSync)
+      window.screen.orientation?.removeEventListener('change', scheduleSync)
       if (dialog.open) dialog.close()
     }
   }, [])
