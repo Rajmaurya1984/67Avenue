@@ -27,7 +27,7 @@ export function flatThreeRadarHeading(direction, roomId) {
 // Looking around rotates the cone; a panorama's capture point stays fixed.
 export const FLAT_THREE_CAMERA_POSITIONS = {
   living: { left: 86, top: 86 },
-  balcony: { left: 75, top: 19 }, // Estimated capture point on the balcony.
+  balcony: { left: 76, top: 21 }, // Estimated capture point on the balcony.
   passage: { left: 59, top: 61 },
   kitchen: { left: 43, top: 69 },
   'bedroom-1': { left: 21, top: 52 },
