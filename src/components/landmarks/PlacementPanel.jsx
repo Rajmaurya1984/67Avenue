@@ -42,7 +42,6 @@ export function usePlacementMarkers(initialCategory) {
         position,
       }),
     )
-    console.log('Current markers array:', markerConfig)
     await navigator.clipboard?.writeText(JSON.stringify(markerConfig, null, 2))
     setDidCopy(true)
     window.setTimeout(() => setDidCopy(false), 1800)

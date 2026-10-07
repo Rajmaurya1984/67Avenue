@@ -5,7 +5,7 @@ const UPDATED_SCENES = new Set(['yoga', 'walking-3', 'stargazing', 'swings',
 const IMAGE_REVISION = '20261005-1'
 export const AMENITY_OVERVIEW = `${ROOT}/optimized/overview-display.webp`
 
-// Feature centres measured on the current renders, as image x / image width.
+// Feature centres measured on the current renders, as image x / image width. 
 // Mirrored SphereGeometry maps u to (cos(2πu), 0, sin(2πu)).
 export const AMENITY_ARRIVAL_U = {
   yoga: .535, 'walking-3': .49, 'walking-4': .49, 'walking-1': .5,

@@ -76,7 +76,10 @@ export default function Amenities() {
         const card = cardRefs.current.get(key)
         if (!card) continue
         const cardBox = card.getBoundingClientRect()
-        next[key] = Number((((cardBox.top + cardBox.height / 2) - box.top) / box.height * 100).toFixed(3))
+        next[key] = {
+          y: Number((((cardBox.top + cardBox.height / 2) - box.top) / box.height * 100).toFixed(3)),
+          x: Number(((card.closest('.amenity-rail--left') ? cardBox.right : cardBox.left) - box.left) / box.width * 100),
+        }
       }
       setElbows((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     }
@@ -134,8 +137,8 @@ export default function Amenities() {
         {imageReady && !selected && (
           <svg className="amenity-vectors" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
             {entries.map(({ pointer }) => {
-              const startY = elbows[pointer.id] ?? pointer.top
-              const edgeX = pointer.left <= 50 ? 15.5 : 84.5
+              const startY = elbows[pointer.id]?.y ?? pointer.top
+              const edgeX = elbows[pointer.id]?.x ?? (pointer.left <= 50 ? 15.5 : 84.5)
               return (
                 <path key={`line-${pointer.id}`} className={`amenity-vector${hoveredId === pointer.id ? ' is-hot' : ''}`}
                   d={`M ${edgeX},${startY} L ${pointer.left},${startY} L ${pointer.left},${pointer.top}`} />

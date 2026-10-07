@@ -349,27 +349,40 @@
 }
 
 @media (max-width: 1024px), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
-    /* Reuse the desktop cards and columns; mobile removes only thumbnails. */
+    /* Keep the desktop image, side rails, thumbnails and connecting lines. */
+    .amenities-overview {
+        width: 100vw;
+    }
+    .amenity-vectors { overflow: visible; }
     .amenity-rail {
         display: flex;
-        top: calc((100% - 100svh) / 2 + max(72px, 20svh));
-        bottom: calc((100% - 100svh) / 2 + max(80px, calc(64px + env(safe-area-inset-bottom))));
-        width: clamp(120px, 16.43vw, 157px);
+        top: calc((100% - 100svh) / 2 + max(128px, 20svh));
+        bottom: calc((100% - 100svh) / 2 + max(164px, calc(144px + env(safe-area-inset-bottom))));
+        width: clamp(72px, 22vw, 157px);
         min-width: 0;
-        padding: 8px 4px;
+        box-sizing: border-box;
+        padding: 4px 2px;
         gap: 8px;
+        overscroll-behavior-y: contain;
     }
-    .amenity-rail--left { left: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-left)); }
-    .amenity-rail--right { right: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-right)); }
+    .amenity-rail--left { left: max(6px, env(safe-area-inset-left)); }
+    .amenity-rail--right { right: max(6px, env(safe-area-inset-right)); }
     .amenity-rail-card {
         flex-shrink: 0;
-        min-height: 34px;
-        width: 80%;
-        padding: 8px 10px;
-        font-size: 10px;
+        min-height: 44px;
+        width: 100%;
+        padding: 6px 4px;
+        font-size: clamp(9px, 2.3vw, 12px);
+        letter-spacing: 0;
+        touch-action: manipulation;
     }
-    .amenity-rail-card img { display: none; }
-    .amenity-vectors { display: none; }
+    .amenity-rail-card img {
+        width: clamp(18px, 5vw, 32px);
+        height: clamp(18px, 5vw, 32px);
+        margin-right: 4px;
+    }
+    .amenity-rail-card__text { min-width: 0; overflow-wrap: anywhere; }
+    .amenity-vector { stroke-width: 1px; }
     .amenity-rail-card:is(:hover, :focus-visible, .is-hot) {
         transform: translateY(-3px) scale(1.02);
         box-shadow: 0 10px 22px -8px rgba(0, 0, 0, .65),
@@ -382,6 +395,16 @@
         transform: translateY(0) scale(.97);
         transition-duration: .08s;
     }
+}
+
+@media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
+    .amenities-overview { width: max(100vw, calc(100svh * var(--overview-aspect, 2))); }
+    .amenity-rail {
+        top: calc((100% - 100svh) / 2 + 80px);
+        bottom: calc((100% - 100svh) / 2 + 84px);
+    }
+    .amenity-rail--left { left: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-left)); }
+    .amenity-rail--right { right: calc((100% - 100vw) / 2 + 24px + env(safe-area-inset-right)); }
 }
 
 @keyframes amenity-card-shine {
