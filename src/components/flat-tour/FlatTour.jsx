@@ -86,11 +86,12 @@ export default function FlatTour({ onClose }) {
   const busy = active?.id !== selected.id || !!incoming
   const radarRoom = FLAT_THREE_ROOMS.find(room => room.id === active?.id) ?? selected
   const radarPosition = radarRoom.cameraPosition
-  // Published pointers take priority over old browser drafts at the same spot.
+  // Published links take priority over browser drafts to the same destination.
   // Keep the drafts available in placement mode for editing and export.
   const tourMarkers = [...FLAT_THREE_HOTSPOTS, ...pointerTools.markers.filter(draft =>
     !FLAT_THREE_HOTSPOTS.some(marker => marker.sourceScene === draft.sourceScene
-      && Math.hypot(...marker.position.map((value, axis) => value - draft.position[axis])) < 3))]
+      && (marker.category === draft.category
+        || Math.hypot(...marker.position.map((value, axis) => value - draft.position[axis])) < 3)))]
 
   useLayoutEffect(() => {
     const element = dialog.current

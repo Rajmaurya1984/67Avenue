@@ -24,7 +24,6 @@ export function flatThreeRadarHeading(direction, roomId) {
 
 // Estimated panorama capture points on the Flat 03 crop, in percentages.
 // Calibrate these against the original render-camera coordinates when available.
-// 
 // Looking around rotates the cone; a panorama's capture point stays fixed.
 export const FLAT_THREE_CAMERA_POSITIONS = {
   living: { left: 86, top: 86 },

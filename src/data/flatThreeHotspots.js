@@ -2,6 +2,9 @@
 export const FLAT_THREE_HOTSPOTS = [
   ['living', 'passage', 'Living Passage', [-21.302, -19.46, 40.798]],
   ['living', 'balcony', 'Balcony View', [-49.054, -2.838, 8.895]],
+  // Return links placed at the living-room openings in the source panoramas.
+  ['balcony', 'living', 'Living Room', [-16.4, -10.7, -41.421]],
+  ['passage', 'living', 'Living Room', [32.76, -14.088, 18.558]],
   ['passage', 'bedroom-1', 'Bedroom 1', [-49.937, -0.793, 0.645]],
   ['passage', 'bedroom-2', 'Bedroom 2', [-46.756, -1.25, -17.417]],
   ['passage', 'kitchen', 'Kitchen', [-39.837, -21.153, 21.473]],
