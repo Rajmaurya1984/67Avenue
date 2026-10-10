@@ -61,17 +61,6 @@ export function usePlacementMarkers(initialCategory) {
   }
 }
 
-const copyMarkers1 = useCallback(async()=>{
-    const markerConfig =PlacementMarker.map(
-      ({title,
-        category,
-        description,
-        position
-      }),
-    )
-    await navigator.clipboard?.writeText(JSON.stringify(markerConfig,null,2))
-
-})
 export function PlacementPanel({
   title = 'Landmark placer',
   instructions = 'Drag to look around, then double-click the exact location to drop a pin.',
