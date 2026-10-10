@@ -125,7 +125,11 @@ function WindowViewSession({ onClose, direction }) {
         {incomingView && <FadeImage key={incomingView.revision} view={incomingView} onComplete={completeFade} reducedMotion={reducedMotion} />}
         <PanoramaControls fov={displayedFov} setFov={setFov} minFov={minFov} maxFov={maxFov} rotating={!!activeView} horizontalSpan={Math.PI} />
       </Canvas>
-      <div className="window-view__menu">
+      <div className="window-view__navigation">
+        <button type="button" className="window-view__close" onClick={onClose} aria-label="Back to floor plan">
+          <span aria-hidden="true">← Back</span> 
+        </button>
+      <div className="window-view__menu">  
         <div className="window-view__times" role="group" aria-label="Time of day">
           {WINDOW_VIEW_TIMES.map((time) => (
             <button key={time.id} type="button" className="window-view__time"
@@ -148,9 +152,7 @@ function WindowViewSession({ onClose, direction }) {
         ))}
         {error && <p className="window-view__error" role="status">{error}</p>}
       </div>
-      <button type="button" className="window-view__close" onClick={onClose} aria-label="Close window view">
-        <WindowViewIcon name="close" />
-      </button>
+      </div>
     </div>
   )
 }

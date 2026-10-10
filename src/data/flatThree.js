@@ -1,5 +1,6 @@
 const ROOT = '/assets/plan/2bhk/Flat_No_03_'
-export const FLAT_THREE_DEFAULT_FOV = 85
+// Open every room at the panorama controls' widest field of view.
+export const FLAT_THREE_DEFAULT_FOV = 95
 // Each panorama has its own azimuth. Anchor a visible feature to a plan axis:
 // u is its horizontal position in the original equirectangular image (0..1),
 // heading is clockwise from the top of the plan. These are visual calibrations.
@@ -27,19 +28,18 @@ export function flatThreeRadarHeading(direction, roomId) {
 // Looking around rotates the cone; a panorama's capture point stays fixed.
 export const FLAT_THREE_CAMERA_POSITIONS = {
   living: { left: 86, top: 86 },
-  balcony: { left: 76, top: 21 }, // Estimated capture point on the balcony.
+  balcony: { left: 76, top: 19 }, // Estimated capture point on the balcony.
   passage: { left: 59, top: 61 },
   kitchen: { left: 43, top: 69 },
   'bedroom-1': { left: 21, top: 52 },
   'bedroom-2': { left: 48, top: 48 },
   'bathroom-1': { left: 14, top: 66 },
   'bathroom-2': { left: 57, top: 42 },
-}
-
+}  
 // Room-selection points on the Flat 03 crop, measured from its top-left.
 export const FLAT_THREE_ROOMS = [
   { id: 'living', name: 'Living Room', file: 'Living Room', left: 86, top: 86 },
-  { id: 'balcony', name: 'Balcony View', image: '/assets/plan/2bhk/Flat_No_03_Living Room_Balcony.jpg', left: 86, top: 12 },
+  { id: 'balcony', name: 'Balcony View', image: '/assets/plan/2bhk/Flat_No_03_Living Room_Balcony.jpg', left: 76, top: 19 },
   { id: 'passage', name: 'Living Passage', file: 'Living Passage', left: 59, top: 61 },
   { id: 'kitchen', name: 'Kitchen', file: 'Kitchen', left: 43, top: 65 },
   { id: 'bedroom-1', name: 'Bedroom 1', file: 'M_Bedroom_01', left: 21, top: 52 },

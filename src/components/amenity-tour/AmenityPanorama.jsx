@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/immutability -- Three.js uniforms are imperative animation targets. */
+import gsap from 'gsap'
+import { createFlatTravelTimeline } from '../flat-tour/flatTravelTimeline.js'
 import PanoramaMarker from '../window-view/PanoramaMarker.jsx'
 import { AMENITY_HOTSPOTS, getAmenityTravelArrival } from '../../data/amenityHotspots.js'
 import { AMENITY_SCENES } from '../../data/amenityTour.js'
@@ -10,28 +13,48 @@ import { getWindowTexture, loadWindowTexture } from '../window-view/windowTextur
 
 const LEVEL_ROTATION = new THREE.Quaternion()
 
-function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace, rotation }) {
+function PanoramaLayer({ view, fade = false, reducedMotion, onComplete, onPlace, zoomMotion }) {
   const gl = useThree(state => state.gl)
+  const camera = useThree(state => state.camera)
   useLayoutEffect(() => { gl.initTexture(view.texture) }, [gl, view.texture])
   const materialRef = useRef(null)
-  const elapsedRef = useRef(0)
-  const completeRef = useRef(false)
-  useFrame((_, delta) => {
-    if (!fade || completeRef.current || !materialRef.current) return
-    elapsedRef.current = Math.min(1, elapsedRef.current + (reducedMotion ? 1 : Math.min(delta, 0.05) / 0.65))
-    const t = elapsedRef.current
-    materialRef.current.opacity = t * t * (3 - 2 * t)
-    if (t === 1) { completeRef.current = true; onComplete(view) }
-  })
+  const [zoomUniform] = useState(() => ({ value: 1 }))
+  const compileZoom = useCallback(shader => {
+    shader.uniforms.roomZoom = zoomUniform
+    shader.vertexShader = 'uniform float roomZoom;\n' + shader.vertexShader.replace(
+      '#include <project_vertex>', '#include <project_vertex>\ngl_Position.xy *= roomZoom;',
+    )
+  }, [zoomUniform])
+  useFrame(() => {
+    const lens = zoomMotion.current
+    zoomUniform.value = !fade && lens.fov !== null
+      ? Math.tan(THREE.MathUtils.degToRad(lens.startFov) / 2) / Math.tan(THREE.MathUtils.degToRad(lens.fov) / 2) : 1
+  }, -1)
+  useLayoutEffect(() => {
+    if (!fade) return undefined
+    const lens = zoomMotion.current
+    const finish = () => onComplete(view)
+    let timeline
+    if (view.travel && !reducedMotion) {
+      lens.fov = camera.fov
+      lens.startFov = camera.fov
+      timeline = createFlatTravelTimeline({ lens, material: materialRef.current, startFov: camera.fov, onComplete: finish })
+    } else {
+      timeline = gsap.timeline({ onComplete: finish })
+      timeline.to(materialRef.current, { opacity: 1, duration: reducedMotion ? .18 : .35, ease: 'sine.inOut' })
+    }
+    return () => { timeline.kill(); lens.fov = null }
+  }, [camera, fade, onComplete, reducedMotion, view, zoomMotion])
   return (
-    <group quaternion={rotation ?? LEVEL_ROTATION}>
+    <group quaternion={view.rotation ?? LEVEL_ROTATION}>
     <mesh scale={[-1, 1, 1]} renderOrder={fade ? 1 : 0}
       onDoubleClick={onPlace ? (event) => {
         event.stopPropagation()
-        onPlace(event.point.toArray().map((value) => Number(value.toFixed(3))))
+        onPlace(event.point.clone().applyQuaternion((view.rotation ?? LEVEL_ROTATION).clone().invert()).toArray().map((value) => Number(value.toFixed(3))))
       } : undefined}>
       <sphereGeometry args={[50, 64, 40]} />
       <meshBasicMaterial ref={materialRef} map={view.texture} side={THREE.DoubleSide}
+        onBeforeCompile={compileZoom}
         transparent={fade} opacity={fade ? 0 : 1} depthTest={!fade} depthWrite={!fade} />
     </mesh>
     </group>
@@ -46,6 +69,7 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
   const [incoming, setIncoming] = useState(null)
   const activeRef = useRef(null)
   const canvasRef = useRef(null)
+  const zoomMotion = useRef({ fov: null, startFov: 50 })
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [fov, setFov] = useState(72)
@@ -79,7 +103,6 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
     const token = {}
     const load = async () => {
       setError('')
-      setFov(72)
       try {
         const texture = getWindowTexture(scene.image)
           ?? await loadWindowTexture(scene.image)
@@ -89,22 +112,23 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
         let arrival = scene
         if (source && camera && source.id !== scene.id) {
           const direction = camera.getWorldDirection(new THREE.Vector3())
+          // Travel coordinates belong to the source panorama's native axes.
+          direction.applyQuaternion((source.rotation ?? LEVEL_ROTATION).clone().invert())
           const heading = Math.atan2(direction.z, direction.x)
           const pointer = AMENITY_HOTSPOTS.find((marker) =>
             marker.sourceScene === source.id && marker.category === scene.id)
           arrival = getAmenityTravelArrival(source.id, scene, pointer, heading)
         }
-        // Hold the outgoing image still while the camera changes to the
-        // destination's level heading; otherwise its ground visibly slides.
-        let outgoingRotation
+        // Align headings around the vertical axis only. Including camera pitch
+        // in the sphere rotation tilts the horizon and accumulates across visits.
+        let rotation
         if (source && camera) {
           const angle = arrival.arrivalU * Math.PI * 2
-          const levelCamera = camera.clone()
-          levelCamera.position.set(-Math.cos(angle), 0, -Math.sin(angle)).multiplyScalar(camera.position.length())
-          levelCamera.lookAt(0, 0, 0)
-          outgoingRotation = levelCamera.quaternion.clone().multiply(camera.quaternion.clone().invert())
+          const direction = camera.getWorldDirection(new THREE.Vector3())
+          const heading = Math.atan2(direction.z, direction.x)
+          rotation = new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DEFAULT_UP, angle - heading)
         }
-        setIncoming({ ...arrival, arrivalPitch: 0, outgoingRotation, texture, token })
+        setIncoming({ ...arrival, arrivalPitch: 0, rotation, travel: !!source, texture, token })
       } catch {
         if (!cancelled) setError('This view could not be opened. Please try again.')
       }
@@ -159,9 +183,10 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
       <Canvas camera={{ position: [0, 0, 0.1], fov: 72 }} dpr={[1, 1.5]}
         onCreated={(state) => { canvasRef.current = state.get }}>
         {/* Keep an opaque outgoing panorama behind the entire destination fade. */}
-        {active && <PanoramaLayer view={active} rotation={incoming?.outgoingRotation}
+        {active && <PanoramaLayer view={active} zoomMotion={zoomMotion}
           onPlace={placementMode && placing && !busy ? place : undefined} />}
-        {incoming && <PanoramaLayer key={`${incoming.id}-${retry}`} view={incoming} fade reducedMotion={reducedMotion} onComplete={complete} />}
+        {incoming && <PanoramaLayer key={`${incoming.id}-${retry}`} view={incoming} zoomMotion={zoomMotion} fade reducedMotion={reducedMotion} onComplete={complete} />}
+        <group quaternion={active?.rotation ?? LEVEL_ROTATION}>
         {placementMode && placing && !busy && sceneMarkers.map((marker) => <PlacementMarker key={marker.id} marker={marker} />)}
         {(!placing || !placementMode) && !busy && AMENITY_HOTSPOTS.filter((marker) => marker.sourceScene === active?.id).map((marker) => (
           <PanoramaMarker key={marker.id} position={marker.position} zIndexRange={[1000, 100]}>
@@ -187,9 +212,11 @@ export default function AmenityPanorama({ scene, onNavigate, placementMode = fal
             </button>
           </PanoramaMarker>
         ))}
+        </group>
         <PanoramaControls fov={fov} setFov={setFov} rotationDelay={3}
           rotating={!reducedMotion && !!active && !busy && !placing}
-          arrivalView={incoming ?? active} />
+          arrivalView={(incoming ?? active)?.travel ? undefined : (incoming ?? active)}
+          suspended={!!incoming?.travel} />
       </Canvas>
       {placementMode && <button type="button" className="amenity-pointer-toggle" aria-pressed={placing}
         onClick={() => setPlacementHidden((value) => !value)}>{placing ? 'Hide amenity pointers' : 'Place amenity pointers'}</button>}

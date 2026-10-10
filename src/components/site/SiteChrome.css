@@ -8,7 +8,7 @@
     view-transition-name: site-group;
     position: fixed;
     z-index: 100015;
-    bottom: max(26px, env(safe-area-inset-bottom));
+    top: max(20px, env(safe-area-inset-bottom));
     right: max(4%, env(safe-area-inset-right));
     width: auto;
     height: 13%;
@@ -30,8 +30,14 @@
 
 .site-brand {
     --brand-height: clamp(40px, 13.23dvh, 90px);
-    isolation: isolate;
     view-transition-name: site-brand;
+    display: block;
+    padding: calc(var(--brand-height) * .111) calc(var(--brand-height) * .156);
+    margin-top: calc(var(--brand-height) * -.111);
+    margin-left: calc(var(--brand-height) * -.156);
+    border-radius: calc(var(--brand-height) * .2);
+    backdrop-filter: blur(24px) saturate(120%);
+    -webkit-backdrop-filter: blur(24px) saturate(120%);
     position: fixed;
     z-index: 100015;
     top: max(26px, env(safe-area-inset-top));
@@ -42,20 +48,17 @@
     letter-spacing: 3px;
     white-space: nowrap;
     text-shadow: 0 2px 14px rgba(29, 25, 21, 0.7);
+    /* Capture the frosted panel and logo together during page transitions. */
 }
 
 .site-brand::before {
     content: '';
     position: absolute;
-    inset: calc(var(--brand-height) * -.111) calc(var(--brand-height) * -.156);
-    z-index: -1;
+    inset: 0;
+    z-index: 0;
     border: 1px solid rgba(255, 255, 255, .48);
     border-radius: calc(var(--brand-height) * .2);
-    background:
-        radial-gradient(ellipse at 0% 0%, rgba(255, 255, 255, .55), transparent 60%),
-        linear-gradient(135deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, .1) 55%, rgba(255, 255, 255, .24));
-    backdrop-filter: blur(calc(var(--brand-height) * .267)) saturate(180%) brightness(1.12);
-    -webkit-backdrop-filter: blur(calc(var(--brand-height) * .267)) saturate(180%) brightness(1.12);
+    background: rgba(245, 239, 235, .48);
     box-shadow:
         0 8px 28px rgba(0, 0, 0, .14),
         inset 0 1px 1px rgba(255, 255, 255, .9),
@@ -65,6 +68,8 @@
 }
 
 .site-brand img {
+    position: relative;
+    z-index: 1;
     display: block;
     width: auto;
     height: var(--brand-height);

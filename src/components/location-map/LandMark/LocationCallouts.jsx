@@ -21,8 +21,7 @@ export function LocationCalloutProjection({ markers, elements }) {
       if (!front) return
       const x = (projected.x + 1) * size.width / 2
       const y = (1 - projected.y) * size.height / 2
-      // Follow the world-space landmark with a fixed authored offset. Never
-      // clamp to the screen or rearrange labels as the camera rotates.
+      // Keep the authored label offsets fixed relative to each panorama point.
       const { name } = splitLandmarkTitle(marker.title)
       const authored = LOCATION_CALLOUT_STYLE[name] ?? {}
       const compact = size.width > size.height && (size.width <= 1024
@@ -59,7 +58,8 @@ export function LocationCallouts({ markers, categories, elements }) {
     </svg>
     {markers.map(marker => {
       const { name, meta } = splitLandmarkTitle(marker.title)
-      const icon = categories.find(item => item.id === marker.category)?.icon ?? 'pin'
+      const icon = Array.isArray(marker.category) ? 'pin'
+        : categories.find(item => item.id === marker.category)?.icon ?? 'pin'
       return <div className="location-callouts__card" key={marker.title} ref={node => attach(marker.title, 'label', node)}>
         <NavIcon name={icon} /><span>{name}</span>{meta && <small>{meta}</small>}
       </div>

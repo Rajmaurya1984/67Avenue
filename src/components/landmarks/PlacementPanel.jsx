@@ -1,11 +1,14 @@
 ﻿// Common authoring tool: drop pins on any panorama with double-click,
 // then copy the config JSON. Panorama-agnostic â€” the host sphere calls
+// Nodejs event loop have timers,pending callback,idle/prepare, closeCallback,poll,checking pase
+// process.nextTick() have higer priorty than the all the callback
 // onPlaceMarker(position) from its onDoubleClick handler.
 
 import { useCallback, useState } from 'react'
+import { PlacementMarker } from './PlacementTools'
 
 
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components */ 
 export function usePlacementMarkers(initialCategory) {
   const [placedMarkers, setPlacedMarkers] = useState([])
   const [didCopy, setDidCopy] = useState(false)
@@ -46,7 +49,6 @@ export function usePlacementMarkers(initialCategory) {
     setDidCopy(true)
     window.setTimeout(() => setDidCopy(false), 1800)
   }, [placedMarkers])
-
   return {
     placedMarkers,
     placementCategory,
@@ -59,6 +61,17 @@ export function usePlacementMarkers(initialCategory) {
   }
 }
 
+const copyMarkers1 = useCallback(async()=>{
+    const markerConfig =PlacementMarker.map(
+      ({title,
+        category,
+        description,
+        position
+      }),
+    )
+    await navigator.clipboard?.writeText(JSON.stringify(markerConfig,null,2))
+
+})
 export function PlacementPanel({
   title = 'Landmark placer',
   instructions = 'Drag to look around, then double-click the exact location to drop a pin.',

@@ -8,7 +8,6 @@ import {
   LandmarkMarker,
   PlacementMarker,
   PlacementPanel,
-  filterByCategory,
   isMapped,
   usePlacementMarkers,
 } from '../../landmarks/index.js'
@@ -16,6 +15,7 @@ import "../LandMark/LandMarkPanaroma.css"
 import { LocationCallouts, LocationCalloutProjection } from './LocationCallouts.jsx'
 import { landmarkLabelLanes, selectLandmarkLabels } from './locationLabelLayout.js'
 import { createTerraceGeometry } from './terraceGeometry.js'
+import { CoastalRoadOverlay, CoastalRoadProjection } from './CoastalRoadLine.jsx'
 
 const DEFAULT_IMAGE_URL = '/assets/location/Location.webp'
 const TERRACE_IMAGE_URL = '/assets/location/Terrace Top (2) - Copy.png'
@@ -101,6 +101,76 @@ const landmarks = [
       49.82
     ]
   },
+    {
+    "title": "Western Express Highway 40min",
+    "category": "Connectivity",
+    "description": "",
+    "position": [
+      49.77,
+      -1.44,
+      3.48
+    ]
+  },
+    {
+    "title": "Coastal Road Line 2min",
+    "category": "Connectivity",
+    "description": "",
+    "position": [
+      -49.26,
+      -5.92,
+      -5.58
+    ]
+  },
+  {
+    "title": "Growels 23min",
+    "category": "",
+    "description": "",
+    "position": [
+      43.57,
+      -2,
+      24.29
+    ]
+  },
+  {
+    "title": "Sky City 20min",
+    "category": "Connectivity",
+    "description": "",
+    "position": [
+      4.58,
+      -1.63,
+      49.71
+    ]
+  },
+  {
+    "title": "NESCO IT Park 47min",
+    "category": "business",
+    "description": "",
+    "position": [
+      20.7,
+      -1.79,
+      41.54
+    ]
+  },
+  {
+    "title": "Oberoi Garden City 44min",
+    "category": "business",
+    "description": "",
+    "position": [
+      38.2,
+      -0.48,
+      32.19
+    ]
+  },
+  {
+    "title": "Borivali Western Edge II 21min",
+    "category": "business",
+    "description": "",
+    "position": [
+      48.51,
+      -0.56,
+      -11.79
+    ]
+  },
   {
     "title": "NAMAHA HOSPITAL 10 MINS",
     "category": "hospitals",
@@ -121,16 +191,36 @@ const landmarks = [
       48.08
     ]
   },
-  //  {
-  //   "title": "KANDIVALI POLICE STATION 5 MINS",
-  //   "category": "safety",
-  //   "description": "",
-  //   "position": [
-  //     49.29,
-  //     -1.22,
-  //     7.72
-  //   ]
-  // },
+    {
+    "title": "Lotus 10min",
+    "category": "hospitals",
+    "description": "",
+    "position": [
+      38.11,
+      -2.98,
+      32.14
+    ]
+  },
+  {
+    "title": "Phoenix 11min",
+    "category": "hospitals",
+    "description": "",
+    "position": [
+      39.35,
+      -1.31,
+      -30.69
+    ]
+  },
+  {
+    "title": "Apex Specialty 19min",
+    "category": "hospitals",
+    "description": "",
+    "position": [
+      32.06,
+      0.01,
+      -36.53
+    ]
+  },
     {
     "title": "OXFORD PUBLIC SCHOOL 7 MINS",
     "category": "schools",
@@ -159,6 +249,36 @@ const landmarks = [
       49.84,
       -0.46,
       -2.91
+    ]
+  },
+    {
+    "title": "Thakur International 9min",
+    "category": "schools",
+    "description": "",
+    "position": [
+      33.05,
+      -1.97,
+      37.34
+    ]
+  },
+  {
+    "title": "Thakur Public School 28min",
+    "category": "schools",
+    "description": "",
+    "position": [
+      47.1,
+      -0.65,
+      16.52
+    ]
+  },
+  {
+    "title": "Ryan CBSE 15min",
+    "category": "schools",
+    "description": "",
+    "position": [
+      15.66,
+      -1.86,
+      47.36
     ]
   },
   {
@@ -193,12 +313,62 @@ const landmarks = [
   },
     {
     "title": "VIPASSANA PAGODA",
-    "category": "lifestyle",
+    "category": ["lifestyle","hospitals","business","Connectivity","schools"],
     "description": "Global Vipassana Pagoda",
     "position": [
       -35.79,
       1.3,
       -34.8
+    ]
+  },
+    {
+    "title": "Infiniti Mall 19min",
+    "category": "lifestyle",
+    "description": "",
+    "position": [
+      22.57,
+      -1.59,
+      44.5
+    ]
+  },
+  {
+    "title": "Sky City 45min",
+    "category": "lifestyle",
+    "description": "",
+    "position": [
+      52.92,
+      -0.68,
+      -27.16
+    ]
+  },
+  {
+    "title": "Sanjay Gandhi National Park 48min",
+    "category": "lifestyle",
+    "description": "",
+    "position": [
+      38.51,
+      0.01,
+      -31.87
+    ]
+  },
+    {
+    "title": "MCA Club 20min",
+    "category": "lifestyle",
+    "description": "",
+    "position": [
+      42.27,
+      -4.25,
+      -26.24
+    ]
+  },
+  {
+    "title": "Goregaon Sports Club 18min",
+    "category": "lifestyle",
+    "description": "",
+    "position": [
+      39.72,
+      -0.43,
+      42.79
     ]
   },
    {
@@ -216,7 +386,7 @@ const landmarks = [
     "category": "business",
     "description": "",
     "position": [
-      28.1,
+      38.1,
       0.07,
       41.33
     ]
@@ -412,7 +582,7 @@ function PanoramaSphere({
 
   return (
     <>
-      <mesh scale={[-1, 1, 1]} onDoubleClick={handleBackgroundDoubleClick}>
+      <mesh scale={[-1, 1, 1]} onDoubleClick={onPlaceMarker ? handleBackgroundDoubleClick : undefined}>
         <sphereGeometry args={[50, 64, 40]} />
         <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
       </mesh>
@@ -563,6 +733,7 @@ export default function LandmarkPanorama({
 }) {
   const containerRef = useRef(null)
   const calloutElements = useRef(new Map())
+  const coastalRoadElements = useRef(null)
   const [detailsPortal, setDetailsPortal] = useState(null)
   const attachContainer = useCallback(element => {
     containerRef.current = element
@@ -584,12 +755,14 @@ export default function LandmarkPanorama({
   const labelLanes = useMemo(() => landmarkLabelLanes(markerData), [markerData])
   const handlePanoramaReady = useCallback(() => setPanoramaReady(true), [])
 
-  // Start with Connectivity; the filter can select 'all' or another category.
+  // Show one category at a time, starting with Connectivity.
   const [category, setCategory] = useState('Connectivity')
 
-  // Everything, or just the selected category - the user's filter.
+  // Only landmarks belonging to the selected category are visible.
   const visible = useMemo(
-    () => filterByCategory(markerData, category),
+    () => markerData.filter(marker => Array.isArray(marker.category)
+      ? marker.category.includes(category)
+      : marker.category === category),
     [markerData, category],
   )
 
@@ -631,7 +804,7 @@ export default function LandmarkPanorama({
             imageUrl={imageUrl}
             markerData={[]}
             placedMarkers={placedMarkers}
-            onPlaceMarker={placementMode && loadingComplete ? placeMarker : () => {}}
+            onPlaceMarker={placementMode && loadingComplete ? placeMarker : undefined}
             openIndex={openIndex}
             onToggle={setOpenIndex}
             containerRef={containerRef}
@@ -644,6 +817,7 @@ export default function LandmarkPanorama({
         </Suspense>
         <PanoramaZoom />
         <LocationCalloutProjection markers={mappedDots} elements={calloutElements} />
+        <CoastalRoadProjection elements={coastalRoadElements} />
         <PanoramaFocus target={focusTarget} onArrive={clearFocus} />
         <PanoramaRotation enabled={rotating && panoramaReady && !markerInteracting && openIndex === null && !focusTarget && !placementMode} />
         <OrbitControls
@@ -659,6 +833,7 @@ export default function LandmarkPanorama({
       </Canvas>
 
       <PanoramaLoader ready={panoramaReady} onComplete={finishLoading} />
+      {loadingComplete && category === 'Connectivity' && <CoastalRoadOverlay elements={coastalRoadElements} />}
       {loadingComplete && <LocationCallouts markers={mappedDots} categories={categories} elements={calloutElements} />}
       {/* <div className="location-view-controls">
         <span>360° VIEW · Drag to explore</span>
@@ -671,7 +846,6 @@ export default function LandmarkPanorama({
         value={category}
         onChange={changeCategory}
         eyebrow={eyebrow}
-        allLabel="View all"
       />}
 
       {placementMode && loadingComplete && (

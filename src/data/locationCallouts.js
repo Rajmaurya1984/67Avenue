@@ -16,4 +16,8 @@ export const LOCATION_CALLOUT_STYLE = {
   'KAPADIA HOSPITAL': { lift: 70, labelOffset: 0 },
   'ZENITH HOSPITAL': { lift: -30, labelOffset: 0 },
   'VIPASSANA PAGODA': { lift: 30, labelOffset: 0 },
+  // Separate the nearby business labels with fixed rows and leader lengths.
+  MINDSPACE: { lift: -124, labelOffset: -35 },
+  'Oberoi Garden City': { lift: 30, labelOffset: 0 },
+  'INFINITY IT PARK': { lift: 110, labelOffset: 35 },
 }

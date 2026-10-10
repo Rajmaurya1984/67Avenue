@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/immutability -- Three.js objects are imperative GSAP animation targets. */
+import gsap from 'gsap'
+import { createFlatTravelTimeline } from './flatTravelTimeline.js'
 import { FLAT_THREE_HOTSPOTS } from '../../data/flatThreeHotspots.js'
 import { useRoomPointers } from './RoomPointerTools.jsx'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -13,36 +16,102 @@ import './FlatTour.css'
 import '../window-view/TourSceneMenu.css'
 import SiteHeader from '../site/SiteHeader.jsx'
 
-function RoomLayer({ view, fade, onComplete }) {
+function RoomLayer({ view, fade, onComplete, setFov, zoomMotion }) {
   const gl = useThree(state => state.gl)
   const camera = useThree(state => state.camera)
+  const get = useThree(state => state.get)
   const [rotation] = useState(() => {
     if (view.rotation !== undefined) return view.rotation
     const direction = camera.getWorldDirection(new THREE.Vector3())
     const room = FLAT_THREE_ROOMS.find(room => room.id === view.id)
     // Immediate arrivals move the camera to the authored heading. Keep the
     // panorama and its pointers in that same native coordinate system.
-    if (room.arrivalImmediate) return 0
+    if (room.arrivalImmediate && !view.travel) return 0
     // Align the destination's authored view to the current camera heading.
     // Rotating only the new sphere keeps the outgoing room perfectly still.
     return room.arrivalU * Math.PI * 2 - Math.atan2(direction.z, direction.x)
   })
   const material = useRef(null)
-  const elapsed = useRef(0)
-  const completed = useRef(false)
+  const [zoomUniform] = useState(() => ({ value: 1 }))
+  const compileZoom = useCallback(shader => {
+    shader.uniforms.roomZoom = zoomUniform
+    shader.vertexShader = 'uniform float roomZoom;\n' + shader.vertexShader.replace(
+      '#include <project_vertex>',
+      '#include <project_vertex>\ngl_Position.xy *= roomZoom;',
+    )
+  }, [zoomUniform])
+  useFrame(() => {
+    const lens = zoomMotion.current
+    // Zoom only the outgoing layer. The incoming image always renders at the
+    // unchanged camera FOV, so there is no visible zoom reset or recovery.
+    zoomUniform.value = !fade && lens.fov !== null
+      ? Math.tan(THREE.MathUtils.degToRad(lens.startFov) / 2) / Math.tan(THREE.MathUtils.degToRad(lens.fov) / 2)
+      : 1
+  }, -1)
   const [reduce] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   useLayoutEffect(() => { gl.initTexture(view.texture) }, [gl, view.texture])
-  useFrame((_, delta) => {
-    if (!material.current) return
-    if (!fade || completed.current) return
-    elapsed.current = Math.min(1, elapsed.current + (reduce ? 1 : Math.min(delta, .05) / .95))
-    const progress = elapsed.current
-    material.current.opacity = progress ** 3 * (progress * (progress * 6 - 15) + 10)
-    if (progress === 1) { completed.current = true; onComplete({ ...view, rotation }) }
-  })
+  useLayoutEffect(() => {
+    if (!fade) return undefined
+    const controls = get().controls
+    const room = FLAT_THREE_ROOMS.find(item => item.id === view.id)
+    const radius = camera.position.length()
+    const startFov = camera.fov
+    const startPosition = camera.position.clone()
+    const damping = controls?.enableDamping
+    const lens = zoomMotion.current
+    let finished = false
+    if (controls) { controls.enabled = false; controls.enableDamping = false; controls.update() }
+    const arrive = () => {
+      const angle = room.arrivalU * Math.PI * 2
+      const pitch = THREE.MathUtils.degToRad(room.arrivalPitch ?? 0)
+      camera.position.set(-Math.cos(angle) * Math.cos(pitch), -Math.sin(pitch), -Math.sin(angle) * Math.cos(pitch)).multiplyScalar(radius)
+      camera.fov = room.arrivalFov ?? FLAT_THREE_DEFAULT_FOV
+      camera.updateProjectionMatrix()
+      controls?.target.set(0, 0, 0)
+      if (controls) controls.update()
+      else camera.lookAt(0, 0, 0)
+      setFov(camera.fov)
+    }
+    const finish = () => {
+      finished = true
+      setFov(camera.fov)
+      if (controls) { controls.enableDamping = damping; controls.enabled = true }
+      onComplete({ id: view.id, name: view.name, texture: view.texture, rotation, preserveView: !!view.travel })
+    }
+    let timeline
+    if (!view.travel) {
+      timeline = gsap.timeline({ onComplete: finish })
+      arrive()
+      timeline.to(material.current, { opacity: 1, duration: reduce ? .18 : .35, ease: 'sine.inOut' })
+    } else if (reduce) {
+      timeline = gsap.timeline({ onComplete: finish })
+      // Keep the outgoing image fully visible while the aligned destination
+      // dissolves over it. Preserve the camera so completion cannot snap.
+      timeline.to(material.current, { opacity: 1, duration: .18, ease: 'sine.inOut' })
+    } else {
+      lens.fov = startFov
+      lens.startFov = startFov
+      timeline = createFlatTravelTimeline({
+        lens, material: material.current,
+        startFov,
+        onComplete: finish,
+      })
+    }
+    return () => {
+      timeline.kill()
+      lens.fov = null
+      if (!finished) {
+        camera.position.copy(startPosition)
+        camera.fov = startFov
+        camera.updateProjectionMatrix()
+      }
+      if (controls) { controls.enableDamping = damping; controls.enabled = true; controls.update() }
+    }
+  }, [camera, fade, get, onComplete, reduce, rotation, setFov, view, zoomMotion])
   return <mesh rotation={[0, rotation, 0]} scale={[-1, 1, 1]} renderOrder={fade ? 1 : 0}>
     <sphereGeometry args={[50, 64, 40]} />
     <meshBasicMaterial ref={material} map={view.texture} side={THREE.DoubleSide}
+      onBeforeCompile={compileZoom}
       transparent={!!fade} opacity={fade ? 0 : 1} depthTest={!fade} depthWrite={!fade} />
   </mesh>
 }
@@ -71,9 +140,11 @@ function RadarHeading({ coneRef, roomId, rotation = 0 }) {
 }
 
 export default function FlatTour({ onClose }) {
+  const zoomMotion = useRef({ fov: null, startFov: FLAT_THREE_DEFAULT_FOV })
   const coneRef = useRef(null)
   const [radarExpanded] = useState(true)
   const dialog = useRef(null)
+  const [pendingTravel, setPendingTravel] = useState(null)
   const [selected, setSelected] = useState(FLAT_THREE_OPENING_ROOM)
   const pointerTools = useRoomPointers(selected.id)
   const [active, setActive] = useState(null)
@@ -83,7 +154,7 @@ export default function FlatTour({ onClose }) {
   const [fov, setFov] = useState(FLAT_THREE_DEFAULT_FOV)
   const [autoRotate] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [mapFailed, setMapFailed] = useState(false)
-  const busy = active?.id !== selected.id || !!incoming
+  const busy = !error && (active?.id !== selected.id || !!incoming)
   const radarRoom = FLAT_THREE_ROOMS.find(room => room.id === active?.id) ?? selected
   const radarPosition = radarRoom.cameraPosition
   // Published links take priority over browser drafts to the same destination.
@@ -108,23 +179,24 @@ export default function FlatTour({ onClose }) {
     const request = requestAnimationFrame(() => {
       setError('')
       void loadWindowTexture(selected.image).then((texture) => {
-        if (!cancelled) setIncoming({ id: selected.id, name: selected.name, texture })
+        if (!cancelled) setIncoming({ id: selected.id, name: selected.name, texture, travel: pendingTravel })
       }).catch(() => {
         if (!cancelled) setError(`${selected.name} could not be loaded.`)
       })
     })
     return () => { cancelled = true; cancelAnimationFrame(request) }
-  }, [selected, retry])
+  }, [selected, retry, pendingTravel])
 
   const complete = useCallback((view) => {
     setActive(view)
     setIncoming((current) => current?.id === view.id ? null : current)
   }, [])
-  const choose = (room) => {
+  const choose = (room, position) => {
     // Let a visible crossfade finish; removing its partially opaque layer
     // midway through would snap back to the previous room.
     if (busy) return
     if (room.id === selected.id) return
+    setPendingTravel(active ? { position: position?.toArray() } : null)
     setIncoming(null)
     setError('')
     setSelected(room)
@@ -180,8 +252,8 @@ export default function FlatTour({ onClose }) {
       </aside>
       <section className="flat-tour__viewer" aria-label={`360 tour: ${active?.name ?? selected.name}`}>
         <Canvas camera={{ position: [.1, 0, 0], fov: FLAT_THREE_DEFAULT_FOV }} dpr={[1, 1.5]}>
-          {active && <RoomLayer key={active.id} view={active} />}
-          {incoming && <RoomLayer key={`${incoming.id}-${retry}`} view={incoming} fade onComplete={complete} />}
+          {active && <RoomLayer key={active.id} view={active} zoomMotion={zoomMotion} />}
+          {incoming && <RoomLayer key={`${incoming.id}-${retry}`} view={incoming} fade onComplete={complete} setFov={setFov} zoomMotion={zoomMotion} />}
           <RadarHeading coneRef={coneRef} roomId={radarRoom.id} rotation={active?.rotation} />
           {!busy && tourMarkers.filter(marker => marker.sourceScene === active?.id).map(marker => {
             const destination = FLAT_THREE_ROOMS.find(room => room.id === marker.category)
@@ -191,15 +263,16 @@ export default function FlatTour({ onClose }) {
               <button type="button" className="flat-room-hotspot" aria-label={`Go to ${destination.name}`}
                 onPointerDown={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}
                 onPointerEnter={() => warm(destination)} onFocus={() => warm(destination)} onTouchStart={() => warm(destination)}
-                onClick={event => { event.stopPropagation(); choose(destination) }}>
+                onClick={event => { event.stopPropagation(); choose(destination, position) }}>
                 <span className="flat-room-hotspot__arrow" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 6 27 18h-7v9h-8v-9H5Z" /></svg></span>
                 <span className="flat-room-hotspot__label">{destination.name}</span>
               </button>
             </PanoramaMarker>
           })}
           <PanoramaControls fov={fov} setFov={setFov} rotationDelay={3}
+            suspended={!!incoming}
             rotating={autoRotate && !!active && !busy}
-            arrivalView={FLAT_THREE_ROOMS.find(room => room.id === (incoming ?? active)?.id)} />
+            arrivalView={active?.preserveView ? undefined : FLAT_THREE_ROOMS.find(room => room.id === (incoming ?? active)?.id)} />
         </Canvas>
         <div className="flat-tour__caption"><h3>{active?.name ?? selected.name}</h3></div>
         {/* <div className="flat-tour__zoom" role="group" aria-label="Room panorama zoom">

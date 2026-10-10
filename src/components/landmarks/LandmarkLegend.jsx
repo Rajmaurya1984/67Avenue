@@ -65,7 +65,7 @@ export default function LandmarkLegend({
                 type="button"
                 className="landmark-filter"
                 aria-pressed={open}
-                onClick={() => onChange?.(open ? 'all' : item.id)}
+                onClick={() => onChange?.(item.id)}
               >
                 <span className="landmark-filter__label">{item.label}</span>
               </button>

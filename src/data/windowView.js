@@ -16,10 +16,10 @@ export const EYE_HOTSPOT = { left: 29, bottom: 10 }
 
 // North is on Wing A's right side; positions use the full image coordinates.
 export const WINDOW_VIEW_DIRECTIONS = [
-  { id: 'north', label: 'North', left: 91, top: 51 },
+  { id: 'north', label: 'North', left: 89, top: 51 },
   { id: 'south', label: 'South', left: 9, top: 51 },
-  { id: 'east', label: 'East', left: 50, top: 86 },
-  { id: 'west', label: 'West', left: 50, top: 13 },
+  { id: 'east', label: 'East', left: 50, top: 87 },
+  { id: 'west', label: 'West', left: 50, top: 16 },
 ]
 
 // Filename stems match the supplied floor_time_direction WebP images.
@@ -52,4 +52,3 @@ export const WINDOW_VIEW_DIRECTION_ASSETS = Object.fromEntries(
 export function getWindowViewAssets(floor, time, direction = 'north') {
   return WINDOW_VIEW_DIRECTION_ASSETS[direction]?.[floor.id]?.[time] ?? null
 }
-

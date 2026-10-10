@@ -38,6 +38,74 @@
     cursor: grabbing;
 }
 
+/* Back and menu share a stack so menu height never controls button placement. */
+.window-view__navigation {
+    position: absolute;
+    z-index: 70;
+    left: max(4%, env(safe-area-inset-left));
+    bottom: calc(40px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: min(220px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    max-height: calc(100dvh - 180px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+.window-view__navigation .window-view__close {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    gap: 8px;
+    width: auto;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 6px;
+}
+
+.window-view__navigation .window-view__menu {
+    position: static;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 640px) {
+    .window-view__navigation {
+        left: max(16px, env(safe-area-inset-left));
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        width: min(126px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+        gap: 6px;
+        max-height: calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+    .window-view__navigation .window-view__close { min-height: 32px; height: 32px; padding: 0 10px; gap: 5px; font-size: 11px; }
+    .window-view__navigation .window-view__menu { padding: 4px 5px; gap: 0; }
+    .window-view__navigation .window-view__times { gap: 1px; padding-bottom: 4px; margin-bottom: 4px; }
+    .window-view__navigation .window-view__time { min-width: 0; min-height: 26px; padding: 2px; gap: 1px; font-size: 7px; }
+    .window-view__navigation .window-view__time svg { width: 12px; height: 12px; }
+    .window-view__navigation .window-view__menu-label { padding: 0 6px; font-size: 6px; letter-spacing: .5px; margin-bottom: 3px; }
+    .window-view__navigation .window-view__floor { min-height: 20px; padding: 3px 6px; font-size: 8px; letter-spacing: .5px; flex-shrink: 0; }
+}
+
+@media (max-height: 520px), (max-width: 1024px) and (orientation: landscape) {
+    .window-view__navigation {
+        left: max(16px, env(safe-area-inset-left));
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        max-height: calc(100dvh - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        width: min(126px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+        gap: 6px;
+    }
+    .window-view__navigation .window-view__close { min-height: 32px; height: 32px; padding: 0 10px; font-size: 11px; }
+    .window-view__navigation .window-view__floor { min-height: 20px; flex-shrink: 0; font-size: 8px; }
+    .window-view__navigation .window-view__time { min-height: 26px; font-size: 7px; }
+}
+
 /* ---- close ---- */
 
 .window-view__close {

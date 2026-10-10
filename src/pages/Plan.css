@@ -1,6 +1,24 @@
 /* Plan page: toolbar + two-column layout (floor rail | gallery).
    Palette: #1D1915, #3A3126, #695441, #C1AA90 */
 
+.plan-compass {
+    position: fixed;
+    right: max(44px, env(safe-area-inset-right));
+    bottom: max(44px, env(safe-area-inset-bottom));
+    width: clamp(64px, 10vw, 150px);
+    height: auto;
+    object-fit: contain;
+    z-index: 100010;
+    pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    .plan-compass {
+        right: max(16px, env(safe-area-inset-right));
+        bottom: calc(112px + env(safe-area-inset-bottom));
+    }
+}
+
 .plan-toolbar {
     display: flex;
     align-items: center;
@@ -104,13 +122,13 @@
     cursor: grabbing;
 }
 
-/* The drawing fills the free height when there is room for it, otherwise the
-   stage width; the stage's overflow hides the frame's transparent margins. */
+/* Preserve the original drawing size. Eyes use the image's transparent margin
+   and scale with this frame, including their pulse rings. */
 .floorplan-stage__frame {
     position: relative;
     flex-shrink: 0;
     width: min(100%, calc((100svh - var(--plan-chrome-top) - var(--plan-chrome-bottom)) * var(--plan-image-fit)));
-    width: min(100%, calc(var(--plan-free-h) * var(--plan-image-fit)));
+    width: min(100%, calc(max(0px, var(--plan-free-h)) * var(--plan-image-fit)));
     aspect-ratio: 8000 / 5657;
     transform-origin: center;
     transform: translateY(var(--plan-drawing-offset)) scale(var(--plan-zoom, 1));
@@ -159,12 +177,14 @@
 
 .floorplan-stage__eye {
     position: absolute;
-    z-index: 5;
     transform: translate(-50%, -50%);
+    box-sizing: border-box;
+    z-index: 5;
     display: grid;
     place-items: center;
-    width: 54px;
-    height: 54px;
+    width: 7%;
+    max-width: 54px;
+    aspect-ratio: 1;
     padding: 0;
     border: 1px solid #C1AA90;
     border-radius: 50%;
@@ -174,10 +194,17 @@
     transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* Drawing bounds: x 5.625%–94.3%, y 19.94%–82.79%.
+   These centers keep even the fully expanded pulse outside those bounds. */
+.floorplan-stage__eye[data-direction="north"] { left: 97.3%; top: 51%; }
+.floorplan-stage__eye[data-direction="south"] { left: 2.7%; top: 51%; }
+.floorplan-stage__eye[data-direction="east"] { left: 50%; top: 87%; }
+.floorplan-stage__eye[data-direction="west"] { left: 50%; top: 16%; }
+
 .floorplan-stage__eye svg {
     transform: rotate(180deg);
-    width: 24px;
-    height: 24px;
+    width: 45%;
+    height: 45%;
 }
 
 .floorplan-stage__eye:hover {
@@ -189,7 +216,7 @@
 .floorplan-stage__eye::after {
     content: '';
     position: absolute;
-    inset: -7px;
+    inset: -10%;
     border: 1px solid rgba(193, 170, 144, 0.55);
     border-radius: 50%;
     animation: floorplan-eye-pulse 2.2s ease-out infinite;
@@ -225,13 +252,6 @@
     100% {
         transform: scale(1.35);
         opacity: 0;
-    }
-}
-
-@media (max-width: 640px) {
-    .floorplan-stage__eye {
-        width: 46px;
-        height: 46px;
     }
 }
 
@@ -419,5 +439,4 @@
     .plan-welcome > p { margin-bottom: 6px; }
     .plan-welcome .flat-three-trigger { height: 44px; padding: 0 14px; font-size: 12px; }
     .plan-view-hint { font-size: 10px; }
-    .floorplan-stage__eye { scale: .75; }
 }

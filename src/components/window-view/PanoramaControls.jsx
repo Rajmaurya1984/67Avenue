@@ -7,7 +7,7 @@ import gsap from 'gsap'
 
 const UP = new THREE.Vector3(0, 1, 0)
 
-export default function PanoramaControls({ fov, setFov, rotating, rotationDelay = 0, arrivalView, travel, onTravelFov, horizontalSpan, minFov = 35, maxFov = 95 }) {
+export default function PanoramaControls({ fov, setFov, rotating, rotationDelay = 0, arrivalView, travel, onTravelFov, horizontalSpan, minFov = 35, maxFov = 95, suspended = false }) {
   const { gl, get, size } = useThree()
   const horizontalFov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(fov) / 2) * size.width / Math.max(1, size.height))
   const azimuthLimit = horizontalSpan ? Math.max(0, (horizontalSpan - horizontalFov) / 2 - 0.01) : Infinity
@@ -20,7 +20,7 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
   useLayoutEffect(() => {
     const camera = get().camera
     const controls = controlsRef.current
-    if (!controls || !arrivalView) return undefined
+    if (!controls || !arrivalView || suspended) return undefined
     // Flush drag momentum before steering into the destination's authored view.
     controls.enableDamping = false
     controls.update()
@@ -105,13 +105,13 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
       controls.enabled = true
       controls.enableDamping = true
     }
-  }, [arrivalView, get, travel, onTravelFov, minFov, maxFov, setFov])
+  }, [arrivalView, get, travel, onTravelFov, minFov, maxFov, setFov, suspended])
   useEffect(() => {
     const canvas = gl.domElement
     const pointers = new Map()
     const wheel = (event) => {
       event.preventDefault()
-      if (arrivalRef.current || travelRef.current) return
+      if (suspended || arrivalRef.current || travelRef.current) return
       const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1)
       setFov((value) => THREE.MathUtils.clamp(Math.min(value, maxFov) + THREE.MathUtils.clamp(pixels * 0.04, -10, 10), minFov, maxFov))
     }
@@ -123,7 +123,7 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
       if (event.pointerType === 'touch') pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
     }
     const move = (event) => {
-      if (arrivalRef.current || travelRef.current) return
+      if (suspended || arrivalRef.current || travelRef.current) return
       if (!pointers.has(event.pointerId)) return
       const before = pointers.size === 2 ? distance() : 0
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
@@ -146,9 +146,10 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
       canvas.removeEventListener('pointercancel', up)
       canvas.removeEventListener('lostpointercapture', up)
     }
-  }, [gl, setFov, minFov, maxFov])
+  }, [gl, setFov, minFov, maxFov, suspended])
 
   useFrame(({ camera }, delta) => {
+    if (suspended) { rotationIdleRef.current = 0; return }
     if (travelRef.current) { rotationIdleRef.current = 0; return }
     const arrival = arrivalRef.current
     if (arrival) {
@@ -197,7 +198,7 @@ export default function PanoramaControls({ fov, setFov, rotating, rotationDelay 
   }, -2)
 
   // Zoom changes field of view; dollying would move the camera inside the sphere.
-  return <OrbitControls ref={controlsRef} makeDefault enablePan={false} enableZoom={false}
+  return <OrbitControls ref={controlsRef} makeDefault enabled={!suspended} enablePan={false} enableZoom={false}
     minAzimuthAngle={-azimuthLimit} maxAzimuthAngle={azimuthLimit}
     minPolarAngle={horizontalSpan ? Math.PI / 2 : 0} maxPolarAngle={horizontalSpan ? Math.PI / 2 : Math.PI}
     enableDamping dampingFactor={0.08} rotateSpeed={-0.35}

@@ -1,4 +1,70 @@
 /* Full-bleed panorama wrapper */
+.coastal-road-line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.coastal-road-line path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.coastal-road-line__glow {
+    stroke: #ffcb75;
+    stroke-width: 18;
+    opacity: .6;
+    filter: blur(5px);
+}
+
+.coastal-road-line__base {
+    stroke: #e5b568;
+    stroke-width: 6;
+}
+
+.coastal-road-line__flow {
+    stroke: #fff4d6;
+    stroke-width: 3;
+    stroke-dasharray: 14 32;
+    animation: coastal-road-flow 1.8s linear infinite;
+}
+
+.coastal-road-line__point {
+    fill: #fff4d6;
+    stroke: #c99544;
+    stroke-width: 1.5;
+}
+
+.coastal-road-line__pulse {
+    fill: none;
+    stroke: #ffdb94;
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: coastal-road-pulse 2.4s ease-out infinite;
+    animation-delay: var(--point-delay);
+}
+
+@keyframes coastal-road-flow {
+    to { stroke-dashoffset: -46; }
+}
+
+@keyframes coastal-road-pulse {
+    from { transform: scale(.65); opacity: .9; }
+    to { transform: scale(2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coastal-road-line__flow,
+    .coastal-road-line__pulse { animation: none; }
+    .coastal-road-line__pulse { opacity: .5; }
+}
+
 .editorial-page--panorama {
     padding: 0 !important;
     min-height: 100vh;

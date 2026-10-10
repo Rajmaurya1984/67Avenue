@@ -9,7 +9,7 @@ import './Plan.css'
 
 // WindowView page (nav "WindowView" -> /plan): the typical floor plan is a
 // fitted hero image within the available stage. The eye opens <WindowView>.
-// Scale the frame so the hotspot stays attached to the drawing.
+// Window-view controls scale with the frame inside the image's clear margins.
 const FlatTour = lazy(() => import('../components/flat-tour/FlatTour.jsx'))
 
 export default function Plan() {
@@ -42,7 +42,12 @@ export default function Plan() {
           </button>
         </section>
       </div>
-     
+      {!tourOpen && !viewDirection && <img
+        className="plan-compass"
+        src={assetUrl('/assets/home/compasslogo.png')}
+        alt="Compass"
+        draggable={false}
+      />}
       <div className="editorial-page__body">
         <div className={`floorplan-stage${planLoaded ? ' is-loaded' : ''} is-fixed`}>
           <div className="floorplan-stage__frame" style={{ '--plan-zoom': zoom }}>
@@ -60,12 +65,12 @@ export default function Plan() {
                   key={direction.id}
                   type="button"
                   className="floorplan-stage__eye"
-                  style={{ left: `${direction.left}%`, top: `${direction.top}%` }}
+                  data-direction={direction.id}
                   onClick={() => setViewDirection(direction.id)}
                   aria-label={`Open ${direction.label} window view`}
                 >
                   <NavIcon name="eye" />
-                  <span className="floorplan-stage__eye-label">{direction.label}</span>
+                  
                 </button>
             ))}
           </div>
@@ -81,7 +86,9 @@ export default function Plan() {
             </p>
           )}
         </div>
+     
       </div>
+      
 
       {tourOpen && <Suspense fallback={<p className="flat-tour-opening" role="status">Opening Flat no 3…</p>}>
         <FlatTour onClose={() => setTourOpen(false)} />

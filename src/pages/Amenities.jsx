@@ -20,11 +20,17 @@ import '../components/window-view/TourSceneMenu.css'
 const landmark = false;
 const panoramaPlacement = false;
 const menuScenes = [
-  ['yoga', 'Yoga'], ['ludo', 'Ludo'], ['gazebo', 'Gazebo Seating'],
-  ['walking-3', 'Walking Space Area'], ['swings', 'Swing Area'],
-  ['stargazing', 'Stargazing Deck'], ['terrace-1', 'Terrace Seating 1'],
-  ['screening', 'Outdoor Screening Space'], ['walking-2', 'Walking Space 2'],
-  ['terrace-2', 'Terrace Seating 2'], ['kids', "Kids' Play Area"],
+  ['yoga', 'Yoga'], 
+  ['ludo', 'Ludo'], 
+  ['gazebo', 'Gazebo Seating'],
+  ['kids', "Kids' Play Area"],
+  ['terrace-1', 'Terrace Seating 1'],
+  ['terrace-2', 'Terrace Seating 2'],
+  ['screening', 'Outdoor Screening Space'], 
+  ['swings', 'Swing Area'],
+  ['stargazing', 'Stargazing Deck'], 
+  ['walking-2', 'Walking Space Area'],
+  ['walking-3', 'Walking Space Area'],
 ]
 const placementCategories = AMENITY_SCENES.map((scene) => ({ id: scene.id, label: scene.name }))
 
@@ -50,7 +56,7 @@ export default function Amenities() {
   const originRef = useRef(null)
   const backRef = useRef(null)
   const selected = AMENITY_SCENES.find((scene) => scene.id === selectedId)
-  // Stable pointer list: AMENITY_POINTERS is a module constant, so ids are
+  // Stable pointer list: AMENITY_POINTERS is a module constant, so ids are 
   // stable and elbows only re-measure on count / readiness changes.
   const entries = pointers.map((pointer) => ({
     pointer,
@@ -166,7 +172,7 @@ export default function Amenities() {
                       onBlur={() => setHoveredId((id) => (id === pointer.id ? null : id))}
                       onClick={(event) => openView(scene, event)}>
                       <img src={assetUrl(scene.thumbnail)} alt="" width="44" height="44" loading="lazy" decoding="async" />
-                      <span className="amenity-rail-card__text">{pointer.label || scene.name}</span>
+                      <span className="amenity-rail-card__text">{scene.id.startsWith('walking-') ? 'Walking Space' : pointer.label || scene.name}</span>
                       {/* <NavIcon name="chevron-right" /> */}
                     </button>
                   )
@@ -193,11 +199,12 @@ export default function Amenities() {
         )}
       </div>
       {selected && <nav className="minimal-room-stack" aria-label="Explore amenities">
-        {menuScenes.map(([id, label]) => <button key={id} type="button"
+        {menuScenes.map(([id, label], i) => <button key={id} type="button"
           className={`stack-item${selectedId === id ? ' active' : ''}`}
           data-room={id} aria-pressed={selectedId === id}
           onClick={() => { if (selectedId !== id) setSelectedId(id) }}>
-          {label}
+          <span className="stack-item__number" aria-hidden="true">{i + 1}</span>
+          <span className="stack-item__label">{label}</span>
         </button>)}
       </nav>}
       {landmark && !selected && (
