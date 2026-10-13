@@ -1,4 +1,4 @@
-import { AMENITY_OVERVIEW } from './amenityTour.js'
+ import { AMENITY_OVERVIEW } from './amenityTour.js'
 import { assetUrl } from '../lib/utils.js'
 
 // Navigation and prefetching share the same imports and in-flight requests.

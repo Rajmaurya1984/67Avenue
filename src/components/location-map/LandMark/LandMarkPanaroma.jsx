@@ -102,7 +102,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "Western Express Highway 40min",
+    "title": "WESTERN EXPRESS HIGHWAY 40min",
     "category": "Connectivity",
     "description": "",
     "position": [
@@ -112,7 +112,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "Coastal Road Line 2min",
+    "title": "COASTAL ROAD LINE 2min",
     "category": "Connectivity",
     "description": "",
     "position": [
@@ -122,23 +122,13 @@ const landmarks = [
     ]
   },
   {
-    "title": "Growels 23min",
-    "category": "",
+    "title": "GROWELS 23min",
+    "category": "lifestyle",
     "description": "",
     "position": [
       43.57,
       -2,
       24.29
-    ]
-  },
-  {
-    "title": "Sky City 20min",
-    "category": "Connectivity",
-    "description": "",
-    "position": [
-      4.58,
-      -1.63,
-      49.71
     ]
   },
   {
@@ -152,7 +142,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Oberoi Garden City 44min",
+    "title": "OBERIO GARDERN CITY 44min",
     "category": "business",
     "description": "",
     "position": [
@@ -162,7 +152,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Borivali Western Edge II 21min",
+    "title": "BORIVALI WESTERN EDGE II 21min",
     "category": "business",
     "description": "",
     "position": [
@@ -192,7 +182,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "Lotus 10min",
+    "title": "LOTUS 10min",
     "category": "hospitals",
     "description": "",
     "position": [
@@ -202,7 +192,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Phoenix 11min",
+    "title": "PHOENIX 11min",
     "category": "hospitals",
     "description": "",
     "position": [
@@ -252,7 +242,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "Thakur International 9min",
+    "title": "THAKUR INTERNATIONAL 9min",
     "category": "schools",
     "description": "",
     "position": [
@@ -262,7 +252,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Thakur Public School 28min",
+    "title": "THAKUR PUBLIC SCHOOL 28min",
     "category": "schools",
     "description": "",
     "position": [
@@ -272,7 +262,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Ryan CBSE 15min",
+    "title": "RYAN CBSE 15min",
     "category": "schools",
     "description": "",
     "position": [
@@ -322,7 +312,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "Infiniti Mall 19min",
+    "title": "INFINITI MALL 19min",
     "category": "lifestyle",
     "description": "",
     "position": [
@@ -332,7 +322,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Sky City 45min",
+    "title": "SKY CITY 45min",
     "category": "lifestyle",
     "description": "",
     "position": [
@@ -342,7 +332,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Sanjay Gandhi National Park 48min",
+    "title": "SANJAY GANDHI NATIONAL PARK 48min",
     "category": "lifestyle",
     "description": "",
     "position": [
@@ -362,7 +352,7 @@ const landmarks = [
     ]
   },
   {
-    "title": "Goregaon Sports Club 18min",
+    "title": "GOREGAON SPORTS CLUB 18min",
     "category": "lifestyle",
     "description": "",
     "position": [
