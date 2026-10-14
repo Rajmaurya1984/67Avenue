@@ -112,7 +112,7 @@ const landmarks = [
     ]
   },
     {
-    "title": "COASTAL ROAD LINE 2min",
+    "title": "COASTAL ROAD 2min",
     "category": "Connectivity",
     "description": "",
     "position": [
