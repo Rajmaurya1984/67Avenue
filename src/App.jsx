@@ -9,7 +9,7 @@ const router = createBrowserRouter([
   // Keep the overview ready even when Amenities is clicked immediately.
   // Its WebGL tour still loads only when a visitor opens a 360 view.
   { path: '/amenities', Component: Amenities },
-  ...['/', '/location', '/plan', '/legacy'].map((path) => ({
+  ...['/', '/location', '/plan', '/legacy', '/amenities/interior'].map((path) => ({
     path,
     lazy: async () => ({ Component: (await loadPage(path)).default }),
   })),

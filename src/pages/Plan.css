@@ -340,15 +340,18 @@
     color: #fcfaf8;
 }
 
-.plan-welcome {
+.flatNo {
     position: absolute;
     z-index: 20;
     bottom: var(--plan-chrome-bottom);
     left: 4%;
+    right: 4%;
+    display: grid;
+    gap: 4px;
 }
 
-.flatNo {
-    display: flex;
+.plan-welcome {
+    position: relative;
 }
 .plan-welcome h1 {
     margin: 0 0 16px;

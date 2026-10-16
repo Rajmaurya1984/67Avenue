@@ -7,6 +7,7 @@ const pageImports = {
   '/location': () => import('../pages/Location.jsx'),
   '/plan': () => import('../pages/Plan.jsx'),
   '/legacy': () => import('../pages/Legacy.jsx'),
+  '/amenities/interior': () => import('../pages/InteriorAmenities.jsx'),
 }
 const pageImages = {
   '/amenities': AMENITY_OVERVIEW,

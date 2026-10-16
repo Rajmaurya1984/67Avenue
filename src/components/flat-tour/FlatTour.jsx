@@ -2,11 +2,13 @@
 import gsap from 'gsap'
 import { createFlatTravelTimeline } from './flatTravelTimeline.js'
 import { FLAT_THREE_HOTSPOTS } from '../../data/flatThreeHotspots.js'
-import { useRoomPointers } from './RoomPointerTools.jsx'
+import { RoomPointerPanel, useRoomPointers } from './RoomPointerTools.jsx'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { FLAT_THREE_DEFAULT_FOV, FLAT_THREE_OPENING_ROOM, FLAT_THREE_ROOMS, flatThreeRadarHeading } from '../../data/flatThree.js'
+import { FLAT_THREE_DEFAULT_FOV, FLAT_THREE_ROOMS, flatThreeRadarHeading } from '../../data/flatThree.js'
+import { FLAT_TWO_ROOMS, FLAT_TWO_HOTSPOTS, FLAT_TWO_MAP_VIEWBOX, FLAT_TWO_MAP_ASPECT, flatTwoRadarHeading } from '../../data/flatTwo.js'
+import { FLAT_FIVE_ROOMS, FLAT_FIVE_HOTSPOTS, FLAT_FIVE_MAP_VIEWBOX, FLAT_FIVE_MAP_ASPECT, flatFiveRadarHeading } from '../../data/flatFive.js'
 import { FLOOR_PLAN_IMAGE } from '../../data/windowView.js'
 import { assetUrl } from '../../lib/utils.js'
 import { loadWindowTexture } from '../window-view/windowTextures.js'
@@ -16,14 +18,14 @@ import './FlatTour.css'
 import '../window-view/TourSceneMenu.css'
 import SiteHeader from '../site/SiteHeader.jsx'
 
-function RoomLayer({ view, fade, onComplete, setFov, zoomMotion }) {
+function RoomLayer({ onPlace, rooms, view, fade, onComplete, setFov, zoomMotion }) {
   const gl = useThree(state => state.gl)
   const camera = useThree(state => state.camera)
   const get = useThree(state => state.get)
   const [rotation] = useState(() => {
     if (view.rotation !== undefined) return view.rotation
     const direction = camera.getWorldDirection(new THREE.Vector3())
-    const room = FLAT_THREE_ROOMS.find(room => room.id === view.id)
+    const room = rooms.find(room => room.id === view.id)
     // Immediate arrivals move the camera to the authored heading. Keep the
     // panorama and its pointers in that same native coordinate system.
     if (room.arrivalImmediate && !view.travel) return 0
@@ -53,7 +55,7 @@ function RoomLayer({ view, fade, onComplete, setFov, zoomMotion }) {
   useLayoutEffect(() => {
     if (!fade) return undefined
     const controls = get().controls
-    const room = FLAT_THREE_ROOMS.find(item => item.id === view.id)
+    const room = rooms.find(item => item.id === view.id)
     const radius = camera.position.length()
     const startFov = camera.fov
     const startPosition = camera.position.clone()
@@ -107,8 +109,13 @@ function RoomLayer({ view, fade, onComplete, setFov, zoomMotion }) {
       }
       if (controls) { controls.enableDamping = damping; controls.enabled = true; controls.update() }
     }
-  }, [camera, fade, get, onComplete, reduce, rotation, setFov, view, zoomMotion])
-  return <mesh rotation={[0, rotation, 0]} scale={[-1, 1, 1]} renderOrder={fade ? 1 : 0}>
+  }, [camera, fade, get, onComplete, reduce, rooms, rotation, setFov, view, zoomMotion])
+  return <mesh rotation={[0, rotation, 0]} scale={[-1, 1, 1]} renderOrder={fade ? 1 : 0}
+    onDoubleClick={onPlace ? event => {
+      event.stopPropagation()
+      const point = event.point.clone().applyAxisAngle(THREE.Object3D.DEFAULT_UP, -rotation)
+      onPlace(point.toArray().map(value => Number(value.toFixed(3))))
+    } : undefined}>
     <sphereGeometry args={[50, 64, 40]} />
     <meshBasicMaterial ref={material} map={view.texture} side={THREE.DoubleSide}
       onBeforeCompile={compileZoom}
@@ -117,7 +124,7 @@ function RoomLayer({ view, fade, onComplete, setFov, zoomMotion }) {
 }
 
 
-function RadarHeading({ coneRef, roomId, rotation = 0 }) {
+function RadarHeading({ radarHeading, coneRef, roomId, rotation = 0 }) {
   const direction = useRef(new THREE.Vector3())
   useFrame(({ camera }) => {
     if (!coneRef.current) return
@@ -125,7 +132,7 @@ function RadarHeading({ coneRef, roomId, rotation = 0 }) {
     direction.current.applyAxisAngle(THREE.Object3D.DEFAULT_UP, -rotation)
     // Keep the last heading when looking straight up or down (yaw is undefined).
     if (Math.hypot(direction.current.x, direction.current.z) > 1e-5) {
-      const heading = flatThreeRadarHeading(direction.current, roomId)
+      const heading = radarHeading(direction.current, roomId)
       coneRef.current.style.transform = `rotate(${heading}deg)`
     }
     // The floor-plan cone represents horizontal coverage: derive it from the
@@ -139,14 +146,21 @@ function RadarHeading({ coneRef, roomId, rotation = 0 }) {
   return null
 }
 
-export default function FlatTour({ onClose }) {
+export default function FlatTour({ onClose, flatNumber = 3 }) {
+  const rooms = flatNumber === 5 ? FLAT_FIVE_ROOMS : flatNumber === 2 ? FLAT_TWO_ROOMS : FLAT_THREE_ROOMS
+  const hotspots = flatNumber === 5 ? FLAT_FIVE_HOTSPOTS : flatNumber === 2 ? FLAT_TWO_HOTSPOTS : FLAT_THREE_HOTSPOTS
+  const radarHeading = flatNumber === 5 ? flatFiveRadarHeading : flatNumber === 2 ? flatTwoRadarHeading : flatThreeRadarHeading
+  const mapViewBox = flatNumber === 5 ? FLAT_FIVE_MAP_VIEWBOX : flatNumber === 2 ? FLAT_TWO_MAP_VIEWBOX : '520 141.4 185 127.26'
+  const mapAspect = flatNumber === 5 ? FLAT_FIVE_MAP_ASPECT : flatNumber === 2 ? FLAT_TWO_MAP_ASPECT : 185 / 127.26
+  const label = 'Flat no ' + flatNumber
   const zoomMotion = useRef({ fov: null, startFov: FLAT_THREE_DEFAULT_FOV })
   const coneRef = useRef(null)
   const [radarExpanded] = useState(true)
+  const [placing, setPlacing] = useState(false)
   const dialog = useRef(null)
   const [pendingTravel, setPendingTravel] = useState(null)
-  const [selected, setSelected] = useState(FLAT_THREE_OPENING_ROOM)
-  const pointerTools = useRoomPointers(selected.id)
+  const [selected, setSelected] = useState(rooms[0])
+  const pointerTools = useRoomPointers(selected.id, rooms, flatNumber === 5 ? '67avenue-flat05-room-pointers-v1' : flatNumber === 2 ? '67avenue-flat02-room-pointers-v2' : '67avenue-flat03-room-pointers-v1')
   const [active, setActive] = useState(null)
   const [incoming, setIncoming] = useState(null)
   const [error, setError] = useState('')
@@ -155,14 +169,21 @@ export default function FlatTour({ onClose }) {
   const [autoRotate] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [mapFailed, setMapFailed] = useState(false)
   const busy = !error && (active?.id !== selected.id || !!incoming)
-  const radarRoom = FLAT_THREE_ROOMS.find(room => room.id === active?.id) ?? selected
+  const radarView = active ?? incoming
+  const radarRoom = rooms.find(room => room.id === radarView?.id) ?? selected
   const radarPosition = radarRoom.cameraPosition
-  // Published links take priority over browser drafts to the same destination.
-  // Keep the drafts available in placement mode for editing and export.
-  const tourMarkers = [...FLAT_THREE_HOTSPOTS, ...pointerTools.markers.filter(draft =>
-    !FLAT_THREE_HOTSPOTS.some(marker => marker.sourceScene === draft.sourceScene
-      && (marker.category === draft.category
-        || Math.hypot(...marker.position.map((value, axis) => value - draft.position[axis])) < 3)))]
+  // Flat 03 retains its original published-pointer priority and proximity filter.
+  // Flats 02 and 05 allow newly authored drafts to replace its published room links.
+  const tourMarkers = flatNumber === 3
+    ? [...FLAT_THREE_HOTSPOTS, ...pointerTools.markers.filter(draft =>
+      !FLAT_THREE_HOTSPOTS.some(marker => marker.sourceScene === draft.sourceScene
+        && (marker.category === draft.category
+          || Math.hypot(...marker.position.map((value, axis) => value - draft.position[axis])) < 3)))]
+    : placing ? pointerTools.markers : [
+      ...hotspots.filter(marker => !pointerTools.markers.some(draft =>
+        draft.sourceScene === marker.sourceScene && draft.category === marker.category)),
+      ...pointerTools.markers,
+    ]
 
   useLayoutEffect(() => {
     const element = dialog.current
@@ -171,115 +192,97 @@ export default function FlatTour({ onClose }) {
     document.body.style.overflow = 'hidden'
     return () => { element.close(); document.body.style.overflow = overflow }
   }, [])
-
-  // Opens straight into the 360 view: the first panorama starts downloading as
-  // soon as the dialog mounts, so the room appears without an intro screen.
   useEffect(() => {
     let cancelled = false
     const request = requestAnimationFrame(() => {
       setError('')
-      void loadWindowTexture(selected.image).then((texture) => {
+      void loadWindowTexture(selected.image).then(texture => {
         if (!cancelled) setIncoming({ id: selected.id, name: selected.name, texture, travel: pendingTravel })
-      }).catch(() => {
-        if (!cancelled) setError(`${selected.name} could not be loaded.`)
-      })
+      }).catch(() => { if (!cancelled) setError(selected.name + ' could not be loaded.') })
     })
     return () => { cancelled = true; cancelAnimationFrame(request) }
   }, [selected, retry, pendingTravel])
-
-  const complete = useCallback((view) => {
+  const complete = useCallback(view => {
     setActive(view)
-    setIncoming((current) => current?.id === view.id ? null : current)
+    setIncoming(current => current?.id === view.id ? null : current)
   }, [])
   const choose = (room, position) => {
-    // Let a visible crossfade finish; removing its partially opaque layer
-    // midway through would snap back to the previous room.
-    if (busy) return
-    if (room.id === selected.id) return
+    if (busy || room.id === selected.id) return
     setPendingTravel(active ? { position: position?.toArray() } : null)
     setIncoming(null)
     setError('')
     setSelected(room)
   }
-  const warm = (room) => { void loadWindowTexture(room.image).catch(() => { }) }
-
-  return <dialog ref={dialog} className="flat-tour flat-tour--immersive" aria-labelledby="flat-tour-title"
-    onCancel={(event) => { event.preventDefault(); onClose() }}>
-    <header className="flat-tour__header">
-      <div className="flat-tour__header-actions">
-        <button type="button" onClick={onClose} aria-label="Close Flat no 3 tour"><span aria-hidden="true">✕</span></button>
-      </div>
-    </header>
+  const warm = room => { void loadWindowTexture(room.image).catch(() => {}) }
+  return <dialog data-flat-number={flatNumber} ref={dialog} className="flat-tour flat-tour--immersive" aria-label={label + ' tour'}
+    onCancel={event => { event.preventDefault(); onClose() }}>
+    <header className="flat-tour__header"><div className="flat-tour__header-actions">
+      <button type="button" onClick={onClose} aria-label={'Close ' + label + ' tour'}><span aria-hidden="true">&#10005;</span></button>
+    </div></header>
     <div className="flat-tour__body">
       <SiteHeader showGroup={false} />
       <nav className="minimal-room-stack" aria-label="Explore rooms">
-        {/* <span className="minimal-room-stack__title">Explore your home</span> */}
-        {FLAT_THREE_ROOMS.map(room => <button key={room.id} type="button"
-          className={`stack-item${selected.id === room.id ? ' active' : ''}`}
+        {rooms.map(room => <button key={room.id} type="button"
+          className={'stack-item' + (selected.id === room.id ? ' active' : '')}
           data-room={room.id} aria-pressed={selected.id === room.id} disabled={busy}
           onPointerEnter={() => warm(room)} onFocus={() => warm(room)} onClick={() => choose(room)}>
-          {room.name.replace('Bathroom', 'Toilet')}
+          {room.name}
         </button>)}
       </nav>
-      <aside className="flat-tour__map-panel" aria-label="Flat no 3 room map">
-        {/* <header className="flat-radar__header"><span>FLOOR PLAN</span><button type="button" aria-expanded={radarExpanded} aria-controls="flat-radar-drawing" onClick={() => setRadarExpanded(value => !value)} aria-label={radarExpanded ? 'Minimize floor plan' : 'Expand floor plan'}>{radarExpanded ? '−' : '+'}</button></header> */}
+      <aside className="flat-tour__map-panel" aria-label={label + ' room map'}>
         <div id="flat-radar-drawing" hidden={!radarExpanded}>
           <p className="flat-tour__eyebrow">EXPLORE YOUR HOME</p>
-          <h3>A room-by-room perspective.</h3>
-          <p>Select a pulsing pointer to step inside.</p>
-          <div className="flat-tour__map">
-            <svg viewBox="520 141.4 185 127.26" role="img" aria-label="Flat 03 floor plan with two bedrooms, living room, kitchen and bathrooms">
+          <h3>A room-by-room perspective.</h3><p>Select a pulsing pointer to step inside.</p>
+          <div className="flat-tour__map" style={{ aspectRatio: mapAspect }}>
+            <svg viewBox={mapViewBox} role="img" aria-label={label + ' floor plan'}>
               <image href={assetUrl(FLOOR_PLAN_IMAGE)} width="1000" height="707" onError={() => setMapFailed(true)} />
             </svg>
-            {!mapFailed && <div className="flat-radar__position" aria-hidden="true" style={{ left: `${radarPosition.left}%`, top: `${radarPosition.top}%` }}><span ref={coneRef} className="flat-radar__cone" /><i /></div>}
-            {!mapFailed && FLAT_THREE_ROOMS.map((room) => <button key={room.id} type="button"
-              className={`flat-tour__pin${radarRoom.id === room.id ? ' is-selected' : ''}`}
-              style={{ left: `${room.left}%`, top: `${room.top}%` }}
-              aria-label={`Explore ${room.name}`} aria-pressed={selected.id === room.id}
-              disabled={busy}
+            {!mapFailed && <div className="flat-radar__position" aria-hidden="true" style={{ left: radarPosition.left + '%', top: radarPosition.top + '%' }}><span ref={coneRef} className="flat-radar__cone" /><i /></div>}
+            {!mapFailed && rooms.map(room => <button key={room.id} type="button"
+              className={'flat-tour__pin' + (radarRoom.id === room.id ? ' is-selected' : '')}
+              style={{ left: room.cameraPosition.left + '%', top: room.cameraPosition.top + '%' }} aria-label={'Explore ' + room.name}
+              aria-pressed={selected.id === room.id} disabled={busy}
               onPointerEnter={() => warm(room)} onFocus={() => warm(room)} onClick={() => choose(room)}>
-              <span className="flat-tour__ping" aria-hidden="true" /><span className="flat-tour__dot" aria-hidden="true" />
+              <span className="flat-tour__ping" aria-hidden="true" />
+              <span className="flat-tour__dot" aria-hidden="true" />
               <span className="flat-tour__tooltip">{room.name}</span>
             </button>)}
           </div>
           {mapFailed && <p role="alert">The plan image could not load. Select a room below.</p>}
           <nav className="flat-tour__rooms" aria-label="Choose a room">
-            {FLAT_THREE_ROOMS.map((room) => <button key={room.id} type="button" aria-pressed={selected.id === room.id}
-              disabled={busy}
+            {rooms.map(room => <button key={room.id} type="button" aria-pressed={selected.id === room.id} disabled={busy}
               onPointerEnter={() => warm(room)} onFocus={() => warm(room)} onClick={() => choose(room)}>{room.name}</button>)}
           </nav>
-          </div>
+        </div>
       </aside>
-      <section className="flat-tour__viewer" aria-label={`360 tour: ${active?.name ?? selected.name}`}>
+      <section className="flat-tour__viewer" aria-label={'360 tour: ' + (active?.name ?? selected.name)}>
         <Canvas camera={{ position: [.1, 0, 0], fov: FLAT_THREE_DEFAULT_FOV }} dpr={[1, 1.5]}>
-          {active && <RoomLayer key={active.id} view={active} zoomMotion={zoomMotion} />}
-          {incoming && <RoomLayer key={`${incoming.id}-${retry}`} view={incoming} fade onComplete={complete} setFov={setFov} zoomMotion={zoomMotion} />}
-          <RadarHeading coneRef={coneRef} roomId={radarRoom.id} rotation={active?.rotation} />
+          {active && <RoomLayer onPlace={placing && !busy ? pointerTools.place : undefined} rooms={rooms} key={active.id} view={active} zoomMotion={zoomMotion} />}
+          {incoming && <RoomLayer rooms={rooms} key={incoming.id + '-' + retry} view={incoming} fade onComplete={complete} setFov={setFov} zoomMotion={zoomMotion} />}
+          <RadarHeading radarHeading={radarHeading} coneRef={coneRef} roomId={radarRoom.id} rotation={radarView?.rotation} />
           {!busy && tourMarkers.filter(marker => marker.sourceScene === active?.id).map(marker => {
-            const destination = FLAT_THREE_ROOMS.find(room => room.id === marker.category)
+            const destination = rooms.find(room => room.id === marker.category)
             if (!destination) return null
             const position = new THREE.Vector3(...marker.position).applyAxisAngle(THREE.Object3D.DEFAULT_UP, active?.rotation ?? 0)
             return <PanoramaMarker key={marker.id} position={position} zIndexRange={[3, 1]}>
-              <button type="button" className="flat-room-hotspot" aria-label={`Go to ${destination.name}`}
+              <button type="button" className="flat-room-hotspot" disabled={placing} aria-label={'Go to ' + destination.name}
                 onPointerDown={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}
                 onPointerEnter={() => warm(destination)} onFocus={() => warm(destination)} onTouchStart={() => warm(destination)}
                 onClick={event => { event.stopPropagation(); choose(destination, position) }}>
-                <span className="flat-room-hotspot__arrow" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 6 27 18h-7v9h-8v-9H5Z" /></svg></span>
+                <span className="flat-room-hotspot__circle" aria-hidden="true" />
                 <span className="flat-room-hotspot__label">{destination.name}</span>
               </button>
             </PanoramaMarker>
           })}
-          <PanoramaControls fov={fov} setFov={setFov} rotationDelay={3}
-            suspended={!!incoming}
-            rotating={autoRotate && !!active && !busy}
-            arrivalView={active?.preserveView ? undefined : FLAT_THREE_ROOMS.find(room => room.id === (incoming ?? active)?.id)} />
+          <PanoramaControls fov={fov} setFov={setFov} rotationDelay={3} suspended={!!incoming}
+            rotating={autoRotate && !!active && !busy && !placing}
+            arrivalView={active?.preserveView ? undefined : rooms.find(room => room.id === (incoming ?? active)?.id)} />
         </Canvas>
+        {flatNumber !== 3 && <button type="button" className="flat-pointer-toggle" aria-pressed={placing}
+          onClick={() => setPlacing(value => !value)}>{placing ? 'Done placing markers' : 'Edit room markers'}</button>}
+        {placing && <RoomPointerPanel tools={pointerTools} name={selected.name} />}
         <div className="flat-tour__caption"><h3>{active?.name ?? selected.name}</h3></div>
-        {/* <div className="flat-tour__zoom" role="group" aria-label="Room panorama zoom">
-          <button type="button" aria-label="Zoom in" disabled={busy || fov <= 35} onClick={() => setFov((value) => Math.max(35, value - 8))}>+</button>
-          <button type="button" aria-label="Zoom out" disabled={busy || fov >= 95} onClick={() => setFov((value) => Math.min(95, value + 8))}>−</button>
-        </div> */}
-        {error && <div className="flat-tour__status" role="alert">{error} <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>}
+        {error && <div className="flat-tour__status" role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></div>}
       </section>
     </div>
   </dialog>

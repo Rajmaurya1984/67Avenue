@@ -19,7 +19,6 @@ import { CoastalRoadOverlay, CoastalRoadProjection } from './CoastalRoadLine.jsx
 
 const DEFAULT_IMAGE_URL = '/assets/location/Location.webp'
 const TERRACE_IMAGE_URL = '/assets/location/Terrace Top (2) - Copy.png'
-
 // Corners follow the perimeter; preserve the supplied coordinates exactly.
 const DEFAULT_TERRACE_POINTS = [
   // [5.74, -48.54, 10.49],   // Front-Right

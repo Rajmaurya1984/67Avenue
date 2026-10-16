@@ -1,4 +1,6 @@
 ﻿import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { INTERIOR_AMENITIES_PATH, INTERIOR_AMENITIES_POINTER, INTERIOR_AMENITY_SCENES } from '../data/interiorAmenities.js'
 import SiteHeader from '../components/site/SiteHeader.jsx'
 import NavIcon from '../components/site/NavIcon.jsx'
 const AmenityPanorama = lazy(() => import('../components/amenity-tour/AmenityPanorama.jsx'))
@@ -15,7 +17,7 @@ import './Editorial.css'
 import './Amenities.css'
 import '../components/window-view/TourSceneMenu.css'
 
-// Set true to place overview dots; panorama placer is enabled separately below.
+// Set true to place overview dots; panorama placer is enabled separately belo
 // Both stay on while you are adding pointers - set false before shipping.
 const landmark = false;
 const panoramaPlacement = false;
@@ -179,6 +181,14 @@ export default function Amenities() {
                 })}
               </div>
             ))}
+            <Link to={INTERIOR_AMENITIES_PATH} className="amenity-node amenity-node--interior"
+              style={{ left: INTERIOR_AMENITIES_POINTER.left + '%', top: INTERIOR_AMENITIES_POINTER.top + '%' }}
+              aria-label="Explore Interior Amenities"
+              onPointerEnter={() => { void loadWindowTexture(INTERIOR_AMENITY_SCENES[0].image).catch(() => {}) }}
+              onFocus={() => { void loadWindowTexture(INTERIOR_AMENITY_SCENES[0].image).catch(() => {}) }}>
+              <span className="amenity-node__core" aria-hidden="true" />
+              <span className="amenity-node__interior-label">Interior Amenities</span>
+            </Link>
             {entries.map(({ pointer, scene }) => {
               const warm = () => { void loadWindowTexture(scene.preview).catch(() => { }) }
               return (
@@ -198,7 +208,11 @@ export default function Amenities() {
           </>
         )}
       </div>
-      {selected && <nav className="minimal-room-stack" aria-label="Explore amenities">
+      {selected && <div className="amenities-tour-controls">
+        <button ref={backRef} type="button" className="amenities-back" onClick={closeView}>
+          <NavIcon name="chevron-left" />Back
+        </button>
+        <nav className="minimal-room-stack" aria-label="Explore amenities">
         {menuScenes.map(([id, label], i) => <button key={id} type="button"
           className={`stack-item${selectedId === id ? ' active' : ''}`}
           data-room={id} aria-pressed={selectedId === id}
@@ -206,7 +220,8 @@ export default function Amenities() {
           <span className="stack-item__number" aria-hidden="true">{i + 1}</span>
           <span className="stack-item__label">{label}</span>
         </button>)}
-      </nav>}
+        </nav>
+      </div>}
       {landmark && !selected && (
         <PlacementPanel categories={placementCategories}
           instructions="Choose an amenity, then double-click its location on the image. Copy config saves the image coordinates for amenityPointers.js."
@@ -217,9 +232,7 @@ export default function Amenities() {
       {selected && (
         <>
           <Suspense fallback={<p role="status">Opening 360° view…</p>}><AmenityPanorama scene={selected} onNavigate={setSelectedId} placementMode={panoramaPlacement} /></Suspense>
-          <button ref={backRef} type="button" className="amenities-back" onClick={closeView}>
-            <NavIcon name="chevron-left" />Back 
-          </button>
+
           {/* <p className="amenities-view-name">{selected.name}</p> */}
         </>
       )}

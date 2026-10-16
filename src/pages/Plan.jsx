@@ -13,7 +13,7 @@ import './Plan.css'
 const FlatTour = lazy(() => import('../components/flat-tour/FlatTour.jsx'))
 
 export default function Plan() {
-  const [tourOpen, setTourOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(null)
   const [planLoaded, setPlanLoaded] = useState(false)
   const [viewDirection, setViewDirection] = useState(null)
   const [zoom] = useState(1)
@@ -27,18 +27,23 @@ export default function Plan() {
         <button
           type="button"
           className="flat-three-trigger"
-          onClick={() => setTourOpen(true)}
+          onClick={() => setTourOpen(2)}
         >
-          <span className="flat-three-trigger__label"><small>2 BHK</small>Flat no 3</span>
+          <span className="flat-three-trigger__label"><small>2BHK W-B</small>Flat no 2</span>
         </button>
         </section>
         <section className="plan-welcome" aria-label="Explore the residences">
           <button
             type="button"
             className="flat-three-trigger"
-            onClick={() => setTourOpen(true)}
+            onClick={() => setTourOpen(3)}
           >
-            <span className="flat-three-trigger__label"><small>2 BHK</small>Flat no 3</span>
+            <span className="flat-three-trigger__label"><small>2BHK W-A</small>Flat no 3</span>
+          </button>
+        </section>
+        <section className="plan-welcome" aria-label="Explore Flat no 5">
+          <button type="button" className="flat-three-trigger" onClick={() => setTourOpen(5)}>
+            <span className="flat-three-trigger__label"><small>3BHK W-B</small>Flat no 5</span>
           </button>
         </section>
       </div>
@@ -90,8 +95,8 @@ export default function Plan() {
       </div>
       
 
-      {tourOpen && <Suspense fallback={<p className="flat-tour-opening" role="status">Opening Flat no 3…</p>}>
-        <FlatTour onClose={() => setTourOpen(false)} />
+      {tourOpen && <Suspense fallback={<p className="flat-tour-opening" role="status">Opening Flat no {tourOpen}...</p>}>
+        <FlatTour key={tourOpen} flatNumber={tourOpen} onClose={() => setTourOpen(null)} />
       </Suspense>}
       <WindowView open={!!viewDirection} direction={viewDirection} onClose={closeView} preload={planLoaded} />
     </main>

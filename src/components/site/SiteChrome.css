@@ -8,10 +8,13 @@
     view-transition-name: site-group;
     position: fixed;
     z-index: 100015;
-    top: max(20px, env(safe-area-inset-bottom));
+    top: max(20px, env(safe-area-inset-top));
     right: max(4%, env(safe-area-inset-right));
+    bottom: auto;
+    box-sizing: content-box;
     width: auto;
-    height: 13%;
+    height: clamp(60px, 13dvh, 118px);
+    padding: 10px 12px 12px;
     object-fit: contain;
     pointer-events: none;
 }
@@ -20,9 +23,12 @@
 
 @media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
     .site-group {
-        bottom: max(12px, env(safe-area-inset-bottom));
-        right: max(var(--mobile-edge), env(safe-area-inset-right));
-        height: 15%;
+        top: max(12px, env(safe-area-inset-top));
+        right: max(16px, env(safe-area-inset-right));
+        bottom: auto;
+        height: clamp(44px, 13dvh, 70px);
+        padding: 6px 8px 8px;
+
     }
     /* .window-view .window-view__close,
     .amenities-page .amenities-back { top: max(68px, calc(56px + env(safe-area-inset-top))); } */
