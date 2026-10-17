@@ -191,6 +191,7 @@
     background: rgba(29, 25, 21, 0.88);
     color: #FCFAF8;
     cursor: pointer;
+    touch-action: manipulation;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -215,6 +216,7 @@
 /* Soft pulse draws the eye without shouting. */
 .floorplan-stage__eye::after {
     content: '';
+    pointer-events: none;
     position: absolute;
     inset: -10%;
     border: 1px solid rgba(193, 170, 144, 0.55);
@@ -348,6 +350,9 @@
     right: 4%;
     display: grid;
     gap: 4px;
+    /* These full-width rows can cross the eyes on short TV viewports.
+       Only the visible flat buttons should intercept input. */
+    pointer-events: none;
 }
 
 .plan-welcome {
@@ -360,6 +365,7 @@
 }
 
 .plan-welcome .flat-three-trigger {
+    pointer-events: auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;

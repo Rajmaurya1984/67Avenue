@@ -380,16 +380,7 @@ const landmarks = [
       41.33
     ]
   },
-  {
-    "title": "APPROVED COASTAL ROAD 10min",
-    "category": "Connectivity",
-    "description": "",
-    "position": [
-      20.9,
-      -1.22,
-      -17.02
-    ]
-  },
+
   {
     "title": "LINK ROAD 5min",
     "category": "Connectivity",
