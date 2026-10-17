@@ -13,7 +13,9 @@
     bottom: auto;
     box-sizing: content-box;
     width: auto;
-    height: clamp(60px, 13dvh, 118px);
+    height: clamp(60px, calc(13 * var(--viewport-height)), 118px);
+    max-width: 180px;
+    max-height: 118px;
     padding: 10px 12px 12px;
     object-fit: contain;
     pointer-events: none;
@@ -26,7 +28,7 @@
         top: max(12px, env(safe-area-inset-top));
         right: max(16px, env(safe-area-inset-right));
         bottom: auto;
-        height: clamp(44px, 13dvh, 70px);
+        height: clamp(44px, calc(13 * var(--viewport-height)), 70px);
         padding: 6px 8px 8px;
 
     }
@@ -35,7 +37,7 @@
 }
 
 .site-brand {
-    --brand-height: clamp(40px, 13.23dvh, 90px);
+    --brand-height: clamp(40px, calc(13.23 * var(--viewport-height)), 90px);
     view-transition-name: site-brand;
     display: block;
     padding: calc(var(--brand-height) * .111) calc(var(--brand-height) * .156);
@@ -429,7 +431,7 @@
 
 @media (max-width: 1024px) and (orientation: landscape), (max-height: 600px) and (orientation: landscape) and (pointer: coarse) {
     .site-brand {
-        --brand-height: clamp(40px, 13.23dvh, 58px);
+        --brand-height: clamp(40px, calc(13.23 * var(--viewport-height)), 58px);
         top: max(12px, env(safe-area-inset-top));
         left: max(var(--mobile-edge), env(safe-area-inset-left));
     }

@@ -2,7 +2,7 @@
 .editorial-page--panorama {
     padding: 0 !important;
     min-height: 100vh;
-    min-height: 100svh;
+    min-height: calc(100 * var(--small-viewport-height));
     overflow: hidden;
     position: relative;
     background: #1D1915 !important;

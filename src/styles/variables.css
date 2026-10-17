@@ -43,3 +43,19 @@
   --gutter: 4%;
   --header-h: 96px;
 }
+
+/* Older Android display browsers do not understand dvh/svh. Keep those units
+   out of custom properties until support is confirmed, or var() consumers
+   become invalid at computed-value time (including the header logo height). */
+:root {
+  --viewport-height: 1vh;
+  --small-viewport-height: 1vh;
+}
+
+@supports (height: 1dvh) {
+  :root { --viewport-height: 1dvh; }
+}
+
+@supports (height: 1svh) {
+  :root { --small-viewport-height: 1svh; }
+}

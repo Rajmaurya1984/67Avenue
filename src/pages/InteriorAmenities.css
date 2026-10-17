@@ -4,7 +4,7 @@
   bottom: max(24px, env(safe-area-inset-bottom));
   width: 220px;
   height: auto;
-  max-height: calc(100dvh - 150px);
+  max-height: calc(calc(100 * var(--viewport-height)) - 150px);
 }
 
 .interior-amenities-page .stack-item { min-height: 40px; }
@@ -39,7 +39,7 @@
     left: max(12px, env(safe-area-inset-left));
     bottom: max(12px, env(safe-area-inset-bottom));
     width: 195px;
-    max-height: calc(100dvh - 110px);
+    max-height: calc(calc(100 * var(--viewport-height)) - 110px);
     padding: 10px 8px;
   }
   .interior-amenities__heading { top: 90px; }

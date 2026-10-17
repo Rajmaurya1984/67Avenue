@@ -49,7 +49,7 @@
     align-items: flex-start;
     gap: 10px;
     width: min(220px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
-    max-height: calc(100dvh - 180px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(calc(100 * var(--viewport-height)) - 180px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 .window-view__navigation .window-view__close {
@@ -82,7 +82,7 @@
         bottom: calc(16px + env(safe-area-inset-bottom));
         width: min(126px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
         gap: 6px;
-        max-height: calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        max-height: calc(calc(100 * var(--viewport-height)) - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     }
     .window-view__navigation .window-view__close { min-height: 32px; height: 32px; padding: 0 10px; gap: 5px; font-size: 11px; }
     .window-view__navigation .window-view__menu { padding: 4px 5px; gap: 0; }
@@ -97,7 +97,7 @@
     .window-view__navigation {
         left: max(16px, env(safe-area-inset-left));
         bottom: calc(12px + env(safe-area-inset-bottom));
-        max-height: calc(100dvh - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        max-height: calc(calc(100 * var(--viewport-height)) - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
         width: min(126px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
         gap: 6px;
     }
@@ -280,7 +280,7 @@
     .window-view__tools { right: 16px; bottom: 96px; }
 }
 @media (max-height: 520px) {
-    .window-view__menu { bottom: 12px; max-height: calc(100svh - 24px); overflow-y: auto; }
+    .window-view__menu { bottom: 12px; max-height: calc(calc(100 * var(--small-viewport-height)) - 24px); overflow-y: auto; }
     .window-view__tools { bottom: 12px; }
 }
 
@@ -293,7 +293,7 @@
         padding: 4px 5px;
         gap: 0;
         /* Keep the top below the centered 44px page arrow, with an 8px gap. */
-        max-height: min(140px, calc(50dvh - 30px - var(--mobile-bottom)));
+        max-height: min(140px, calc(calc(50 * var(--viewport-height)) - 30px - var(--mobile-bottom)));
         overflow-y: auto;
     }
     .window-view__times { gap: 1px; padding-bottom: 2px; margin-bottom: 2px; }

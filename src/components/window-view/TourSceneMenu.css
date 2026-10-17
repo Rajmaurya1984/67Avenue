@@ -8,7 +8,7 @@
   gap: 2px;
   width: 175px;
   max-width: calc(100vw - 64px);
-  max-height: calc(100dvh - 160px);
+  max-height: calc(calc(100 * var(--viewport-height)) - 160px);
   overflow-y: auto;
   padding: 14px 10px 10px;
   border: 1px solid #c1aa903d;
@@ -36,7 +36,7 @@
 }
 .amenities-page .minimal-room-stack {
   box-sizing: border-box;
-  max-height: min(300px, calc(100dvh - 160px));
+  max-height: min(300px, calc(calc(100 * var(--viewport-height)) - 160px));
 }
 .minimal-room-stack .stack-item {
   position: relative;
@@ -116,13 +116,13 @@
     left: max(16px, env(safe-area-inset-left));
     bottom: max(20px, env(safe-area-inset-bottom));
     width: 180px;
-    max-height: min(52dvh, calc(100dvh - 150px));
+    max-height: min(calc(52 * var(--viewport-height)), calc(calc(100 * var(--viewport-height)) - 150px));
     padding: 12px 8px 8px;
     gap: 2px;
   }
   .minimal-room-stack .stack-item { min-height: 44px; padding: 10px 12px; font-size: 12px; }
   .amenities-page .minimal-room-stack {
-    max-height: min(240px, calc(100dvh - 150px));
+    max-height: min(240px, calc(calc(100 * var(--viewport-height)) - 150px));
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -140,9 +140,9 @@
     align-items: stretch;
     gap: 2px;
     width: var(--mobile-panel-width);
-    height: clamp(110px, 38dvh, 168px);
+    height: clamp(110px, calc(38 * var(--viewport-height)), 168px);
     max-width: calc(100vw - 48px);
-    max-height: calc(50dvh - 30px - var(--mobile-bottom));
+    max-height: calc(calc(50 * var(--viewport-height)) - 30px - var(--mobile-bottom));
     overflow-x: hidden;
     overflow-y: auto;
     padding: 10px 8px 8px;

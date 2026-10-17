@@ -68,7 +68,7 @@
 .editorial-page--panorama {
     padding: 0 !important;
     min-height: 100vh;
-    min-height: 100svh;
+    min-height: calc(100 * var(--small-viewport-height));
     overflow: hidden;
     position: relative;
     background: #1D1915 !important;
@@ -161,7 +161,7 @@
     bottom: 116px;
     width: 218px;
     height: auto;
-    max-height: calc(100svh - 260px);
+    max-height: calc(calc(100 * var(--small-viewport-height)) - 260px);
     border-radius: 6px;
     background: rgba(255, 253, 249, .96);
     box-shadow: 0 6px 24px #1d191529;
@@ -305,7 +305,7 @@
     bottom: auto;
     left: auto;
     width: min(320px, calc(100vw - 32px));
-    max-height: calc(100dvh - 240px);
+    max-height: calc(calc(100 * var(--viewport-height)) - 240px);
     overflow-y: auto;
     transform: none;
     animation: none;
@@ -319,7 +319,7 @@
         right: 16px;
         left: 16px;
         width: auto;
-        max-height: calc(100dvh - 440px);
+        max-height: calc(calc(100 * var(--viewport-height)) - 440px);
     }
 }
 
@@ -1117,8 +1117,8 @@
         left: max(var(--mobile-edge), env(safe-area-inset-left));
         bottom: var(--mobile-bottom);
         width: clamp(110px, 13.38vw, 128px);
-        height: clamp(130px, 42dvh, 184px);
-        max-height: calc(50dvh - 30px - var(--mobile-bottom));
+        height: clamp(130px, calc(42 * var(--viewport-height)), 184px);
+        max-height: calc(calc(50 * var(--viewport-height)) - 30px - var(--mobile-bottom));
     }
     .landmark-panorama-container .landmark-legend__head { padding: 12px; gap: 10px; }
     .landmark-panorama-container .landmark-legend__eyebrow { font-size: 7px; letter-spacing: 1.2px; gap: 8px; }

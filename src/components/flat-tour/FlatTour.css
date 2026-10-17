@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100dvh;
+  height: calc(100 * var(--viewport-height));
   max-width: none;
   max-height: none;
   margin: 0;
@@ -722,7 +722,7 @@
 }
 
 .flat-tour--immersive .flat-tour__map-panel {
-  max-height: calc(100dvh - 120px);
+  max-height: calc(calc(100 * var(--viewport-height)) - 120px);
 }
 
 .flat-radar__position i {
@@ -736,7 +736,7 @@
     bottom: max(12px, env(safe-area-inset-bottom));
     width: var(--mobile-map-width);
     padding: 8px;
-    max-height: calc(100dvh - 88px - env(safe-area-inset-bottom));
+    max-height: calc(calc(100 * var(--viewport-height)) - 88px - env(safe-area-inset-bottom));
     overflow-y: auto;
   }
   .flat-tour__header button { top: max(12px, env(safe-area-inset-top)); }
@@ -746,7 +746,7 @@
   .flat-pointer-tools {
     top: 112px;
     left: max(var(--mobile-edge), env(safe-area-inset-left));
-    max-height: calc(100dvh - 132px);
+    max-height: calc(calc(100 * var(--viewport-height)) - 132px);
     width: min(280px, calc(100vw - 64px));
   }
 }

@@ -4,7 +4,7 @@
 .home-page {
     position: relative;
     height: 100vh;
-    height: 100dvh;
+    height: calc(100 * var(--viewport-height));
     overflow: hidden;
     background: #1D1915;
     color: #C1AA90;
@@ -203,14 +203,14 @@
         left: max(var(--mobile-edge), env(safe-area-inset-left));
         right: auto;
         width: min(46vw, 430px);
-        max-height: calc(100dvh - 170px);
+        max-height: calc(calc(100 * var(--viewport-height)) - 170px);
         overflow-y: auto;
         pointer-events: auto;
         transform: none;
     }
     .home-highlights { display: none; }
     .home-hero__eyebrow { margin-bottom: 10px; font-size: 8px; }
-    .home-hero h1 { font-size: clamp(28px, 8dvh, 38px); }
+    .home-hero h1 { font-size: clamp(28px, calc(8 * var(--viewport-height)), 38px); }
     .home-hero__intro { margin-top: 10px; font-size: 11px; line-height: 1.5; }
     .home-hero__cta { margin-top: 12px; padding: 10px 16px; }
     .home-page .site-footer { bottom: max(76px, calc(64px + env(safe-area-inset-bottom))); height: 36px; }

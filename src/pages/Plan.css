@@ -78,7 +78,7 @@
     --plan-chrome-bottom: calc(var(--plan-dock-h) + var(--plan-hint-h));
 
     /* The height the drawing may use: the viewport minus the fixed chrome. */
-    --plan-free-h: calc(100dvh - var(--plan-chrome-top) - var(--plan-chrome-bottom));
+    --plan-free-h: calc(calc(100 * var(--viewport-height)) - var(--plan-chrome-top) - var(--plan-chrome-bottom));
 
     /* floorPlan-web.webp is 8000x5657, but the tower drawing only fills
        x 5.625%..94.3% and y 19.94%..82.79% of it, the rest being transparent
@@ -109,8 +109,8 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    height: 100svh;
-    height: 100dvh;
+    height: calc(100 * var(--small-viewport-height));
+    height: calc(100 * var(--viewport-height));
     padding: var(--plan-chrome-top) 0 var(--plan-chrome-bottom);
     overflow: hidden;
     touch-action: auto;
@@ -127,7 +127,7 @@
 .floorplan-stage__frame {
     position: relative;
     flex-shrink: 0;
-    width: min(100%, calc((100svh - var(--plan-chrome-top) - var(--plan-chrome-bottom)) * var(--plan-image-fit)));
+    width: min(100%, calc((calc(100 * var(--small-viewport-height)) - var(--plan-chrome-top) - var(--plan-chrome-bottom)) * var(--plan-image-fit)));
     width: min(100%, calc(max(0px, var(--plan-free-h)) * var(--plan-image-fit)));
     aspect-ratio: 8000 / 5657;
     transform-origin: center;
