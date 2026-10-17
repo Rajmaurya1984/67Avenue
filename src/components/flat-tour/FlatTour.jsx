@@ -278,11 +278,11 @@ export default function FlatTour({ onClose, flatNumber = 3 }) {
             rotating={autoRotate && !!active && !busy && !placing}
             arrivalView={active?.preserveView ? undefined : rooms.find(room => room.id === (incoming ?? active)?.id)} />
         </Canvas>
-        {flatNumber !== 3 && <button type="button" className="flat-pointer-toggle" aria-pressed={placing}
+        {/* {flatNumber === 5 && <button type="button" className="flat-pointer-toggle" aria-pressed={placing}
           onClick={() => setPlacing(value => !value)}>{placing ? 'Done placing markers' : 'Edit room markers'}</button>}
         {placing && <RoomPointerPanel tools={pointerTools} name={selected.name} />}
         <div className="flat-tour__caption"><h3>{active?.name ?? selected.name}</h3></div>
-        {error && <div className="flat-tour__status" role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></div>}
+        {error && <div className="flat-tour__status" role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></div>} */}
       </section>
     </div>
   </dialog>
